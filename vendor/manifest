@@ -1,0 +1,170 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/BurntSushi/toml",
+			"repository": "https://github.com/BurntSushi/toml",
+			"revision": "99064174e013895bbd9b025c31100bd1d9b590ca",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/dlogrus",
+			"repository": "https://github.com/DroiTaipei/dlogrus",
+			"revision": "883d353e99c7b07c907cf71d13e88b1e7c256388",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/droictx",
+			"repository": "https://github.com/DroiTaipei/droictx",
+			"revision": "d61430e4f551bbe7ced4ea5c761471f942ce7597",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/droipkg",
+			"repository": "https://github.com/DroiTaipei/droipkg",
+			"revision": "8e910cd0d7a20dd62f305ab11348d9d56eb7bf91",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/mgo",
+			"repository": "https://github.com/DroiTaipei/mgo",
+			"revision": "86c90b339f1c0b278cef0e33ce68cafb3e0bb3f9",
+			"branch": "v2"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/mongo",
+			"repository": "https://github.com/DroiTaipei/mongo",
+			"revision": "94629dd05b7e157cf20b76d578d05be17326335f",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/buaazp/fasthttprouter",
+			"repository": "https://github.com/buaazp/fasthttprouter",
+			"revision": "0729217d031ab353a3e34b94e8544e167f7ce9a4",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/cloudfoundry-incubator/candiedyaml",
+			"repository": "https://github.com/cloudfoundry-incubator/candiedyaml",
+			"revision": "99c3df83b51532e3615f851d8c2dbb638f5313bf",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/codegangsta/cli",
+			"repository": "https://github.com/codegangsta/cli",
+			"revision": "d53eb991652b1d438abdd34ce4bfa3ef1539108e",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/devopstaku/logrus",
+			"repository": "https://github.com/devopstaku/logrus",
+			"revision": "053e00e79be54d214ee7a0c84017c2171e03a295",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/elodina/siesta",
+			"repository": "https://github.com/elodina/siesta",
+			"revision": "fea3d8822e875ffef3895e68f5c2f172e0dd4300",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/elodina/siesta-producer",
+			"repository": "https://github.com/elodina/siesta-producer",
+			"revision": "a374fc36c515243efb438aed41c536af55d8b19b",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/ghodss/yaml",
+			"repository": "https://github.com/ghodss/yaml",
+			"revision": "aa0c862057666179de291b67d9f093d12b5a8473",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/go-ini/ini",
+			"repository": "https://github.com/go-ini/ini",
+			"revision": "6e4869b434bd001f6983749881c7ead3545887d8",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/golang/snappy",
+			"repository": "https://github.com/golang/snappy",
+			"revision": "d9eb7a3d35ec988b8585d4a0068e462c27d28380",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/klauspost/compress/flate",
+			"repository": "https://github.com/klauspost/compress",
+			"revision": "d0763f13d86e630f5d3ea9fa848a6ecc68255297",
+			"branch": "master",
+			"path": "/flate"
+		},
+		{
+			"importpath": "github.com/klauspost/compress/gzip",
+			"repository": "https://github.com/klauspost/compress",
+			"revision": "d0763f13d86e630f5d3ea9fa848a6ecc68255297",
+			"branch": "master",
+			"path": "/gzip"
+		},
+		{
+			"importpath": "github.com/klauspost/compress/zlib",
+			"repository": "https://github.com/klauspost/compress",
+			"revision": "d0763f13d86e630f5d3ea9fa848a6ecc68255297",
+			"branch": "master",
+			"path": "/zlib"
+		},
+		{
+			"importpath": "github.com/klauspost/cpuid",
+			"repository": "https://github.com/klauspost/cpuid",
+			"revision": "09cded8978dc9e80714c4d85b0322337b0a1e5e0",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/klauspost/crc32",
+			"repository": "https://github.com/klauspost/crc32",
+			"revision": "19b0b332c9e4516a6370a0456e6182c3b5036720",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/pkg/errors",
+			"repository": "https://github.com/pkg/errors",
+			"revision": "839d9e913e063e28dfd0e6c7b7512793e0a48be9",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/valyala/bytebufferpool",
+			"repository": "https://github.com/valyala/bytebufferpool",
+			"revision": "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/valyala/fasthttp",
+			"repository": "https://github.com/valyala/fasthttp",
+			"revision": "b43280dfe8ade44056e0179593f8ab30f82a7f47",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/valyala/tcplisten",
+			"repository": "https://github.com/valyala/tcplisten",
+			"revision": "69495c8b91e0a19282ed220c374e473ebe11eb7e",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/yanzay/cfg",
+			"repository": "https://github.com/yanzay/cfg",
+			"revision": "3b647091f880406fdb14edcb309ce750a38d3e85",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/zpatrick/go-config",
+			"repository": "https://github.com/zpatrick/go-config",
+			"revision": "2aa1afeb9715ac98543f73232c8784a2425e91c5",
+			"branch": "master"
+		},
+		{
+			"importpath": "gopkg.in/cihub/seelog.v2",
+			"repository": "https://gopkg.in/cihub/seelog.v2",
+			"revision": "d2c6e5aa9fbfdd1c624e140287063c7730654115",
+			"branch": "master"
+		}
+	]
+}

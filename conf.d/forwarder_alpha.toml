@@ -1,0 +1,65 @@
+[api]
+  port = 8080
+[log]
+  # Discard means not write log to local file
+  file_name = "debug.log"
+  level = "debug"
+  standard_log_version = "1"
+  access_log_version = "1"
+  formatter = "json"
+  kafka_enabled = true
+
+[kafka]
+  access_log_topic = "forwarder_access"
+  standard_log_topic = "forwarder_api"
+  hosts = "10.128.112.186:9092"
+  # map to Linger in code
+  flush_frequency = 100
+  max_connections = 5
+  max_connections_per_broker = 5
+  batch_size = 16384
+  max_requests = 10
+  send_routines = 10
+  receive_routines = 10
+  # 0 = NoResponse, 1 = WaitForLocal, -1 = WaitForAll, default is 1
+  required_acks = 0
+  queue_length = 1024
+  # Unit is Millisecond
+  enqueue_timeout = 1000
+
+[database]
+[database.mgo.default]
+  name = "Mgo"
+  user = "geoman"
+  password = "wM7DJRQN81WxX4zD"
+  authdatabase = "admin"
+  database = "zone"
+  max_conn = 10
+  max_idle = 15
+  host_num = 2
+  timeout = 30
+  sharduser= "sharder"
+  shardpassword = "izihGm5UD7KZnCRzbAkFX6PLdtUXK7n3"
+  direct = false
+
+[database.mgo.instance.0]
+  host = "10.128.112.181"
+  port = 7379
+  enabled = true
+
+[database.mgo.instance.1]
+  host = "10.128.112.181"
+  port = 7380
+  enabled = true
+
+[database.mgo.instance.2]
+  host = "10.128.112.181"
+  port = 7380
+  enabled = false
+
+[database.mgo.instance.3]
+  host = "10.128.112.181"
+  port = 7380
+  enabled = false
+
+
