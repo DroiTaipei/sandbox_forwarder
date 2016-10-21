@@ -4,7 +4,8 @@ import (
 	// "encoding/json"
 	// "github.com/DroiTaipei/droictx"
 	// "github.com/DroiTaipei/droipkg"
-	// "fmt"
+	"fmt"
+
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 )
@@ -23,11 +24,25 @@ const (
 
 func ReceiveRequest(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 
-	// fmt.Println("Test receive request!")
+	fmt.Println("Test receive request!")
 
 	// key := ps.ByName("url")
 
 	// fmt.Println(key)
 
 	requestBypass(c)
+}
+
+func MetricsHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+
+	outputMetrics(c)
+
+	resp := NewResponse()
+	resp.Write(c)
+}
+
+func HealthCheckHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+
+	resp := NewResponse()
+	resp.Write(c)
 }

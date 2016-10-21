@@ -1,5 +1,6 @@
 [api]
   port = 8080
+
 [log]
   # Discard means not write log to local file
   file_name = "debug.log"

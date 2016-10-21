@@ -3,11 +3,13 @@ package api
 import (
 	"bytes"
 	"fmt"
+	"runtime"
+
+	ur "util/request"
+
 	"github.com/DroiTaipei/droictx"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
-	"runtime"
-	ur "util/request"
 )
 
 const (
@@ -23,32 +25,22 @@ type Route struct {
 type Routes []Route
 
 var routes = Routes{
-	// Route{
-	// 	"GET",
-	// 	"/test",
-	// 	ReceiveRequest,
-	// },
 	Route{
 		"GET",
-		"/*url",
+		"/health",
+		HealthCheckHandler,
+	},
+	Route{
+		"POST",
+		"/sandbox/*url",
 		ReceiveRequest,
 	},
 
-	// Route{
-	// 	"POST",
-	// 	"/test",
-	// 	ReceiveRequest,
-	// },
-	// Route{
-	// 	"DELETE",
-	// 	"/memcache/:key",
-	// 	ReqDelMemcache,
-	// },
-	// Route{
-	// 	"PATCH",
-	// 	"/memcache/:key",
-	// 	ReqDelMemcache,
-	// },
+	Route{
+		"GET",
+		"/metrics",
+		MetricsHandler,
+	},
 }
 
 func logStackOnRecover(ctx *fasthttp.RequestCtx, r interface{}) {

@@ -6,17 +6,16 @@ import (
 	"github.com/DroiTaipei/mgo/bson"
 	"github.com/DroiTaipei/mongo"
 	"github.com/valyala/fasthttp"
-	"strconv"
 	"sync"
+	"time"
 )
 
 const (
 	SERVICE_NAME_PREFIX = "sh-sand-zone-"
 	SERVICE_NAME_SUFFIX = ".tyd.svc.cluster.local"
 
-	MGO_SANDBOX_ZONE_COL = "SandboxZonePodMapping"
-	MGO_SANDBOX_APP_COL  = "SandboxAppZoneMapping"
-	MGO_METRICS_COL      = "SandboxAccessMetrics"
+	MGO_SANDBOX_APP_COL     = "SandboxAppZoneMapping"
+	MGO_SANDBOX_METRICS_COL = "SandboxAccessMetrics"
 )
 
 var (
@@ -67,25 +66,44 @@ func requestBypass(c *fasthttp.RequestCtx) {
 	if err != nil {
 		fmt.Printf("db query error: %s\n", err)
 		WriteError(c, err)
+		return
 	}
-	// fmt.Printf("Query result : %+v\n", queryResult)
-	// fmt.Println(queryResult.AppID)
 
-	// mutex.Lock()
+	// proxyClient = &fasthttp.HostClient{
+	// 	Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port),
+	// }
 
 	proxyClient = &fasthttp.HostClient{
-		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port),
+		Addr: "tpe-db-baas-mgo.tyd.svc.cluster.local:8081",
 	}
-
-	// proxyClient.Addr = SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port)
-	fmt.Println(SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port))
+	req.SetRequestURI("/1/echo/")
 
 	if err := proxyClient.Do(req, resp); err != nil {
 		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
 		WriteError(c, err)
+		return
+	}
+
+	fmt.Printf("Request for debug: %+v\n", req)
+	fmt.Printf("Response for debug: %+v\n", resp)
+
+	// Update sandbox access metrics
+	upsertDoc := bson.M{
+		"appid":          appid,
+		"last_update_at": uint(time.Now().Unix()),
+	}
+
+	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
+		fmt.Printf("db query error: %s\n", err)
+		WriteError(c, err)
+		return
 	}
 
 	proxyClient = nil
 
 	postprocessResponse(resp)
+}
+
+func outputMetrics(c *fasthttp.RequestCtx) {
+
 }
