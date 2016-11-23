@@ -36,11 +36,11 @@ func ReceiveRequest(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 
 	fmt.Println("Test receive request!")
 
-	// key := ps.ByName("url")
+	key := ps.ByName("url")
 
-	// fmt.Println(key)
+	fmt.Println(key)
 
-	requestBypass(c)
+	requestBypass(c, key)
 }
 
 func MetricsHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {

@@ -15,6 +15,8 @@ const (
 	SERVICE_NAME_PREFIX = "sh-app-hl-sand-"
 	SERVICE_NAME_SUFFIX = ".tyd.svc.cluster.local"
 
+	GO_BUSTER_PORT = 8081
+
 	MGO_SANDBOX_APP_COL     = "SandboxAppZoneMapping"
 	MGO_SANDBOX_METRICS_COL = "SandboxAccessMetrics"
 )
@@ -65,7 +67,7 @@ func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid}, nil, 0, 10)
 	if err != nil {
 		fmt.Printf("db query error: %s\n", err)
-		WriteError(c, err)
+		WriteError(c, ErrAppNotFound)
 		return
 	}
 
@@ -107,7 +109,7 @@ func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	postprocessResponse(resp)
 }
 
-func requestBypass(c *fasthttp.RequestCtx) {
+func requestBypass(c *fasthttp.RequestCtx, redirectURL string) {
 
 	resp := &c.Response
 	req := &c.Request
@@ -123,18 +125,21 @@ func requestBypass(c *fasthttp.RequestCtx) {
 	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid}, nil, 0, 10)
 	if err != nil {
 		fmt.Printf("db query error: %s\n", err)
-		WriteError(c, err)
+		WriteError(c, ErrAppNotFound)
 		return
 	}
 
-	// proxyClient = &fasthttp.HostClient{
-	// 	Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port),
-	// }
+	fmt.Println(SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT))
 
 	proxyClient = &fasthttp.HostClient{
-		Addr: "tpe-db-baas-mgo.tyd.svc.cluster.local:8081",
+		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
 	}
-	req.SetRequestURI("/1/echo/")
+
+	// proxyClient = &fasthttp.HostClient{
+	// 	Addr: "tpe-db-baas-mgo.tyd.svc.cluster.local:8081",
+	// }
+
+	req.SetRequestURI(redirectURL)
 
 	if err := proxyClient.Do(req, resp); err != nil {
 		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
