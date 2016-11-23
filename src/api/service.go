@@ -49,7 +49,7 @@ func postprocessResponse(resp *fasthttp.Response) {
 	resp.Header.Del("Connection")
 }
 
-func requestBypassGobuster(c *fasthttp.RequestCtx) {
+func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	resp := &c.Response
 	req := &c.Request
@@ -79,7 +79,7 @@ func requestBypassGobuster(c *fasthttp.RequestCtx) {
 	// 	Addr: "tpe-db-baas-mgo.tyd.svc.cluster.local:8081",
 	// }
 
-	// req.SetRequestURI("/1/echo/")
+	req.SetRequestURI(redirectURL)
 
 	if err := proxyClient.Do(req, resp); err != nil {
 		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)

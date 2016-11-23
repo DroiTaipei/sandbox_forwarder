@@ -29,7 +29,7 @@ func ReceiveRequestBypassGobuster(c *fasthttp.RequestCtx, ps fasthttprouter.Para
 
 	fmt.Println(key)
 
-	requestBypassGobuster(c)
+	requestBypassGobuster(c, key)
 }
 
 func ReceiveRequest(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
