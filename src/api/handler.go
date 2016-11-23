@@ -21,6 +21,16 @@ const (
 // 	resp := getMemcache(ctx, ps.ByName("key"))
 // 	resp.Write(c)
 // }
+func ReceiveRequestBypassGobuster(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+
+	fmt.Println("Test receive request!")
+
+	key := ps.ByName("url")
+
+	fmt.Println(key)
+
+	requestBypassGobuster(c)
+}
 
 func ReceiveRequest(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 

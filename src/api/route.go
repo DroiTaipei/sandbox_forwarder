@@ -30,9 +30,16 @@ var routes = Routes{
 		"/health",
 		HealthCheckHandler,
 	},
+
 	Route{
 		"POST",
 		"/sandbox/*url",
+		ReceiveRequestBypassGobuster,
+	},
+
+	Route{
+		"POST",
+		"/gobuster/*url",
 		ReceiveRequest,
 	},
 
