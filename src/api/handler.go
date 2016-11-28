@@ -16,11 +16,12 @@ const (
 	MAX_TTL          = 86400
 )
 
-// func ReqGetMemcache(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
-// 	ctx, _ := c.UserValue(DROI_CTX_KEY).(droictx.Context)
-// 	resp := getMemcache(ctx, ps.ByName("key"))
-// 	resp.Write(c)
-// }
+func HealthCheckHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+
+	resp := NewResponse()
+	resp.Write(c)
+}
+
 func ReceiveRequestBypassGobuster(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 
 	fmt.Println("Test receive request!")
@@ -51,8 +52,12 @@ func MetricsHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 	resp.Write(c)
 }
 
-func HealthCheckHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+func RequestHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+	fmt.Println("Test receive request!")
 
-	resp := NewResponse()
-	resp.Write(c)
+	url := ps.ByName("url")
+
+	fmt.Println(url)
+
+	requestToGobuster(c, url)
 }

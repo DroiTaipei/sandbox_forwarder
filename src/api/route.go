@@ -24,31 +24,41 @@ type Route struct {
 }
 type Routes []Route
 
-var routes = Routes{
-	Route{
-		"GET",
-		"/health",
-		HealthCheckHandler,
-	},
+var (
+	routes = Routes{
+		Route{
+			"GET",
+			"/health",
+			HealthCheckHandler,
+		},
 
-	Route{
-		"POST",
-		"/sandbox/*url",
-		ReceiveRequestBypassGobuster,
-	},
+		Route{
+			"POST",
+			"/sandbox/*url",
+			ReceiveRequestBypassGobuster,
+		},
 
-	Route{
-		"POST",
-		"/gobuster/*url",
-		ReceiveRequest,
-	},
+		Route{
+			"POST",
+			"/gobuster/*url",
+			ReceiveRequest,
+		},
 
-	Route{
-		"GET",
-		"/metrics",
-		MetricsHandler,
-	},
-}
+		Route{
+			"GET",
+			"/metrics",
+			MetricsHandler,
+		},
+	}
+
+	requestRoutes = Routes{
+		Route{
+			"GET",
+			"/*url",
+			RequestHandler,
+		},
+	}
+)
 
 func logStackOnRecover(ctx *fasthttp.RequestCtx, r interface{}) {
 	var buffer bytes.Buffer
@@ -85,11 +95,24 @@ func gloablMiddleware(h fasthttprouter.Handle) fasthttprouter.Handle {
 	})
 }
 
-func Regist() *fasthttprouter.Router {
+func ApiRegist() *fasthttprouter.Router {
 	r := fasthttprouter.New()
 	r.PanicHandler = logStackOnRecover
 	var routingPath string
 	for _, route := range routes {
+		routingPath = fmt.Sprintf("/%s%s", API_VERSION, route.Pattern)
+		debugf("%s : %s", route.Method, routingPath)
+		r.Handle(route.Method, routingPath, gloablMiddleware(route.HandlerFunc))
+	}
+
+	return r
+}
+
+func ForwarderRegist() *fasthttprouter.Router {
+	r := fasthttprouter.New()
+	r.PanicHandler = logStackOnRecover
+	var routingPath string
+	for _, route := range requestRoutes {
 		routingPath = fmt.Sprintf("/%s%s", API_VERSION, route.Pattern)
 		debugf("%s : %s", route.Method, routingPath)
 		r.Handle(route.Method, routingPath, gloablMiddleware(route.HandlerFunc))

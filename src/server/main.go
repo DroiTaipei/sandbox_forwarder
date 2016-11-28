@@ -8,7 +8,7 @@ import (
 	"github.com/DroiTaipei/droipkg"
 	"github.com/DroiTaipei/mongo"
 	"github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/reuseport"
+	// "github.com/valyala/fasthttp/reuseport"
 	stdlog "log"
 	"os"
 	"runtime"
@@ -81,25 +81,18 @@ func run(cfgFilePath string) (err error) {
 
 	droipkg.SetLogger(dlogrus.StandardLogger())
 
-	router := api.Regist()
-	if err != nil {
-		return droipkg.Wrap(err, "Regist Router Failed")
-	}
-	bind := fmt.Sprintf(":%d", cfg.GetAPIPort())
+	apiRouter := api.ApiRegist()
 
-	ln, err := reuseport.Listen("tcp4", bind)
-	if err != nil {
-		return droipkg.Wrap(err, fmt.Sprintf("error in listen: %s", bind))
-	}
+	forwarderRouter := api.ForwarderRegist()
 
-	// Create custom server.
-	s := &fasthttp.Server{
-		Handler: router.Handler,
-		// Every response will contain 'Server: My super server' header.
-		Name:        "BaaS Memcache API",
-		Concurrency: fasthttp.DefaultConcurrency * 4,
-		// Other Server settings may be set here.
-	}
-	s.Serve(ln)
+	api_port, forwarder_port := cfg.GetAPIPort()
+	bind_api := fmt.Sprintf(":%d", api_port)
+	bind_forwarder := fmt.Sprintf(":%d", forwarder_port)
+
+	fmt.Println(bind_api, " ,", bind_forwarder)
+
+	fasthttp.ListenAndServe(bind_forwarder, forwarderRouter.Handler)
+	fasthttp.ListenAndServe(bind_api, apiRouter.Handler)
+
 	return nil
 }

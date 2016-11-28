@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	EMPTY        = ""
-	API_PORT     = 8080
-	API_POD_NAME = "db-api"
+	EMPTY          = ""
+	API_PORT       = 8080
+	FORWARDER_PORT = 8099
+	API_POD_NAME   = "db-api"
 
 	MGO_PORT         = "7379"
 	MGO_MAX_CONN     = 250
@@ -105,8 +106,9 @@ func LoadConfig(configFile string) (ret *Config, err error) {
 	return
 }
 
-func (cfgs *Config) GetAPIPort() (ret int) {
-	ret, _ = cfgs.IntOr("api.port", API_PORT)
+func (cfgs *Config) GetAPIPort() (api_port, forwarder_port int) {
+	api_port, _ = cfgs.IntOr("api.api_port", API_PORT)
+	forwarder_port, _ = cfgs.IntOr("api.forwarder_port", FORWARDER_PORT)
 	return
 }
 
