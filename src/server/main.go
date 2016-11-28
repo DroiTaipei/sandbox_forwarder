@@ -81,18 +81,23 @@ func run(cfgFilePath string) (err error) {
 
 	droipkg.SetLogger(dlogrus.StandardLogger())
 
+	api_port, forwarder_port := cfg.GetAPIPort()
 	apiRouter := api.ApiRegist()
-
 	forwarderRouter := api.ForwarderRegist()
 
-	api_port, forwarder_port := cfg.GetAPIPort()
-	bind_api := fmt.Sprintf(":%d", api_port)
+	go func() {
+		bind_api := fmt.Sprintf(":%d", api_port)
+
+		stdlog.Println("API server start at port ", api_port)
+
+		err := fasthttp.ListenAndServe(bind_api, apiRouter.Handler)
+		if err != nil {
+			stdlog.Fatalf("API server crash with error %v", err.Error())
+		}
+	}()
+
 	bind_forwarder := fmt.Sprintf(":%d", forwarder_port)
-
-	fmt.Println(bind_api, " ,", bind_forwarder)
-
 	fasthttp.ListenAndServe(bind_forwarder, forwarderRouter.Handler)
-	fasthttp.ListenAndServe(bind_api, apiRouter.Handler)
 
 	return nil
 }

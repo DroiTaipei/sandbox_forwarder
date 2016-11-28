@@ -53,7 +53,7 @@ var (
 
 	requestRoutes = Routes{
 		Route{
-			"GET",
+			"POST",
 			"/*url",
 			RequestHandler,
 		},
