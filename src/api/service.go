@@ -156,7 +156,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 		return
 	}
 
-	fmt.Println(SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT))
+	req.Header.Set("X-Droi-SlotID", strconv.Itoa(queryResult.SlotID))
 
 	proxyClient = &fasthttp.HostClient{
 		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
@@ -166,12 +166,9 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	if err := proxyClient.Do(req, resp); err != nil {
 		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
-		WriteError(c, err)
+		WriteError(c, ErrForwardRequest)
 		return
 	}
-
-	fmt.Printf("Request for debug: %+v\n", req)
-	fmt.Printf("Response for debug: %+v\n", resp)
 
 	// Update sandbox access metrics
 	upsertDoc := bson.M{
@@ -180,8 +177,8 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	}
 
 	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
-		fmt.Printf("db query error: %s\n", err)
-		WriteError(c, err)
+		c.Logger().Printf("db query error: %s", err)
+		WriteError(c, ErrDatabase)
 		return
 	}
 

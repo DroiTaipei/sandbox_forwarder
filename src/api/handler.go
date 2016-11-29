@@ -28,8 +28,6 @@ func ReceiveRequestBypassGobuster(c *fasthttp.RequestCtx, ps fasthttprouter.Para
 
 	key := ps.ByName("url")
 
-	fmt.Println(key)
-
 	requestBypassGobuster(c, key)
 }
 
@@ -38,8 +36,6 @@ func ReceiveRequest(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 	fmt.Println("Test receive request!")
 
 	key := ps.ByName("url")
-
-	fmt.Println(key)
 
 	requestBypass(c, key)
 }
@@ -56,8 +52,6 @@ func RequestHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 	fmt.Println("Test receive request!")
 
 	url := ps.ByName("url")
-
-	fmt.Println(url)
 
 	requestToGobuster(c, url)
 }
