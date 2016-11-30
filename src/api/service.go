@@ -12,10 +12,7 @@ import (
 
 func prepareRequest(req *fasthttp.Request) {
 	// do not proxy "Connection" header.
-
 	req.Header.Del("Connection")
-
-	// req.SetRequestURI("/api/v1/cluster/summary")
 }
 
 func postprocessResponse(resp *fasthttp.Response) {

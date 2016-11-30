@@ -113,7 +113,7 @@ func ForwarderRegist() *fasthttprouter.Router {
 	r.PanicHandler = logStackOnRecover
 	var routingPath string
 	for _, route := range requestRoutes {
-		routingPath = fmt.Sprintf("/%s%s", API_VERSION, route.Pattern)
+		routingPath = fmt.Sprintf("%s", route.Pattern)
 		debugf("%s : %s", route.Method, routingPath)
 		r.Handle(route.Method, routingPath, gloablMiddleware(route.HandlerFunc))
 	}
