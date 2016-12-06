@@ -27,7 +27,7 @@ func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	prepareRequest(req)
 
-	appid := string(req.Header.Peek("X-Droi-AppID"))
+	appid := string(req.Header.Peek("X-Droi-Service-AppID"))
 
 	ctx, _ := c.UserValue(DROI_CTX_KEY).(droictx.Context)
 
@@ -81,7 +81,7 @@ func requestBypass(c *fasthttp.RequestCtx, redirectURL string) {
 
 	prepareRequest(req)
 
-	appid := string(req.Header.Peek("X-Droi-AppID"))
+	appid := string(req.Header.Peek("X-Droi-Service-AppID"))
 
 	ctx, _ := c.UserValue(DROI_CTX_KEY).(droictx.Context)
 
@@ -140,7 +140,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	prepareRequest(req)
 
-	appid := string(req.Header.Peek("X-Droi-AppID"))
+	appid := string(req.Header.Peek("X-Droi-Service-AppID"))
 
 	ctx, _ := c.UserValue(DROI_CTX_KEY).(droictx.Context)
 
