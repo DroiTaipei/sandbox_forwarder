@@ -14,6 +14,8 @@ const (
 
 	MGO_SANDBOX_APP_COL     = "SandboxAppZoneMapping"
 	MGO_SANDBOX_METRICS_COL = "SandboxAccessMetrics"
+
+	APP_ACTIVE = "active"
 )
 
 var (
@@ -28,7 +30,7 @@ var (
 
 type AppSlotMapping struct {
 	AppID         string `bson:"appid" json:"appid"`
-	SlotID        int    `bson:"slot" json:"slot"`
+	SlotID        int    `bson:"slotid" json:"slotid"`
 	SandboxZoneID int    `bson:"szid" json:"szid"`
 	Port          int    `bson:"port" json:"port"`
 }

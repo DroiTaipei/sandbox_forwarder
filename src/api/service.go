@@ -33,7 +33,7 @@ func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	queryResult := AppSlotMapping{}
 
-	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid}, nil, 0, 10)
+	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
 	if err != nil {
 		fmt.Printf("db query error: %s\n", err)
 		WriteError(c, ErrAppNotFound)
@@ -87,7 +87,7 @@ func requestBypass(c *fasthttp.RequestCtx, redirectURL string) {
 
 	queryResult := AppSlotMapping{}
 
-	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid}, nil, 0, 10)
+	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
 	if err != nil {
 		fmt.Printf("db query error: %s\n", err)
 		WriteError(c, ErrAppNotFound)
@@ -146,7 +146,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	queryResult := AppSlotMapping{}
 
-	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid}, nil, 0, 10)
+	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
 	if err != nil {
 		fmt.Printf("db query error: %s\n", err)
 		WriteError(c, ErrAppNotFound)
