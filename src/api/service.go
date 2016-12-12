@@ -35,7 +35,7 @@ func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
 	if err != nil {
-		fmt.Printf("db query error: %s\n", err)
+		c.Logger().Printf("db query error: %s\n", err)
 		WriteError(c, ErrAppNotFound)
 		return
 	}
@@ -64,7 +64,7 @@ func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	}
 
 	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
-		fmt.Printf("db query error: %s\n", err)
+		c.Logger().Printf("db query error: %s\n", err)
 		WriteError(c, err)
 		return
 	}
@@ -180,6 +180,8 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	}
 
 	proxyClient = nil
+
+	c.Logger().Printf("Forward query success, with response: %+v", resp)
 
 	postprocessResponse(resp)
 }
