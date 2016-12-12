@@ -181,7 +181,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	proxyClient = nil
 
-	c.Logger().Printf("Forward query success, with response: %+v", resp)
+	c.Logger().Printf("Forward query success, request: %+v, with response: %+v", req, resp)
 
 	postprocessResponse(resp)
 }
