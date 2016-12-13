@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"runtime"
+	"time"
 
 	ur "util/request"
 
@@ -78,7 +79,7 @@ func logStackOnRecover(ctx *fasthttp.RequestCtx, r interface{}) {
 	return
 }
 
-func gloablMiddleware(h fasthttprouter.Handle) fasthttprouter.Handle {
+func gloablMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handle {
 	return fasthttprouter.Handle(func(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 		var v []byte
 		var ctx droictx.Context
@@ -90,32 +91,52 @@ func gloablMiddleware(h fasthttprouter.Handle) fasthttprouter.Handle {
 		}
 		c.SetUserValue(DROI_CTX_KEY, ctx)
 		HTTPAccessLog(ctx, string(c.Method()), string(c.Path()), c.RemoteAddr().String(), c.Request.Header.ContentLength())
-		h(c, ps)
+
+		doneCh := make(chan struct{})
+		go func() {
+
+			h(c, ps)
+
+			close(doneCh)
+		}()
+
+		select {
+		case <-doneCh:
+
+			debugf("Forward query success, request: %+v, with response: %+v", &c.Request, &c.Response)
+
+		case <-time.After(time.Duration(timeout) * time.Second):
+
+			WriteError(c, ErrForwardTimeout)
+
+		}
+
 		return
 	})
 }
 
-func ApiRegist() *fasthttprouter.Router {
+func ApiRegist(timeout int) *fasthttprouter.Router {
 	r := fasthttprouter.New()
 	r.PanicHandler = logStackOnRecover
 	var routingPath string
 	for _, route := range routes {
 		routingPath = fmt.Sprintf("/%s%s", API_VERSION, route.Pattern)
-		debugf("%s : %s", route.Method, routingPath)
-		r.Handle(route.Method, routingPath, gloablMiddleware(route.HandlerFunc))
+		// debugf("%s : %s", route.Method, routingPath)
+		r.Handle(route.Method, routingPath, gloablMiddleware(route.HandlerFunc, timeout))
 	}
 
 	return r
 }
 
-func ForwarderRegist() *fasthttprouter.Router {
+func ForwarderRegist(timeout int) *fasthttprouter.Router {
 	r := fasthttprouter.New()
 	r.PanicHandler = logStackOnRecover
 	var routingPath string
+
 	for _, route := range requestRoutes {
 		routingPath = fmt.Sprintf("%s", route.Pattern)
 		debugf("%s : %s", route.Method, routingPath)
-		r.Handle(route.Method, routingPath, gloablMiddleware(route.HandlerFunc))
+		r.Handle(route.Method, routingPath, gloablMiddleware(route.HandlerFunc, timeout))
 	}
 	return r
 }

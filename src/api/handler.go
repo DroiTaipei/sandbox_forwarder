@@ -1,11 +1,6 @@
 package api
 
 import (
-	// "encoding/json"
-	// "github.com/DroiTaipei/droictx"
-	// "github.com/DroiTaipei/droipkg"
-	"fmt"
-
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 )
@@ -24,16 +19,12 @@ func HealthCheckHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 
 func ReceiveRequestBypassGobuster(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 
-	fmt.Println("Test receive request!")
-
 	key := ps.ByName("url")
 
 	requestBypassGobuster(c, key)
 }
 
 func ReceiveRequest(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
-
-	fmt.Println("Test receive request!")
 
 	key := ps.ByName("url")
 
@@ -49,7 +40,6 @@ func MetricsHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 }
 
 func RequestHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
-	fmt.Println("Test receive request!")
 
 	url := ps.ByName("url")
 

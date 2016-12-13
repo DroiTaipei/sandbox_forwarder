@@ -82,8 +82,10 @@ func run(cfgFilePath string) (err error) {
 	droipkg.SetLogger(dlogrus.StandardLogger())
 
 	api_port, forwarder_port := cfg.GetAPIPort()
-	apiRouter := api.ApiRegist()
-	forwarderRouter := api.ForwarderRegist()
+	timeout := cfg.GetTimeout()
+
+	apiRouter := api.ApiRegist(timeout)
+	forwarderRouter := api.ForwarderRegist(timeout)
 
 	go func() {
 		bind_api := fmt.Sprintf(":%d", api_port)

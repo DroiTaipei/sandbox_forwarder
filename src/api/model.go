@@ -2,8 +2,6 @@ package api
 
 import (
 	"sync"
-
-	"github.com/valyala/fasthttp"
 )
 
 const (
@@ -19,10 +17,6 @@ const (
 )
 
 var (
-	proxyClient = &fasthttp.HostClient{
-		Addr: "10.128.112.184:8080",
-		// set other options here if required - most notably timeouts.
-	}
 	mutex = &sync.Mutex{}
 
 	connInfo map[string]AppSlotMapping

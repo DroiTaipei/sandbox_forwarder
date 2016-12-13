@@ -21,7 +21,8 @@ const (
 	ErrPanic          = droipkg.ConstDroiError("1160001 Panic Error")
 	ErrAppNotFound    = droipkg.ConstDroiError("1160002 App Not Found")
 	ErrForwardRequest = droipkg.ConstDroiError("1160003 Forward Request Error")
-	ErrDatabase       = droipkg.ConstDroiError("1160004 Database Error")
+	ErrForwardTimeout = droipkg.ConstDroiError("1160004 Forward Request Timeout")
+	ErrDatabase       = droipkg.ConstDroiError("1160005 Database Error")
 )
 
 func getDroiErrorCode(err error) int {

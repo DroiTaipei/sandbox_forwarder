@@ -15,7 +15,7 @@
 [kafka]
   access_log_topic = "forwarder_access"
   standard_log_topic = "forwarder_api"
-  hosts = "10.128.112.186:9092"
+  hosts = "10.10.40.14:9092;10.10.40.15:9092;10.10.40.16:9092;10.10.40.17:9092;10.10.40.18:9092;10.10.40.19:9092"
   # map to Linger in code
   flush_frequency = 100
   max_connections = 5
@@ -39,30 +39,25 @@
   database = "zone"
   max_conn = 10
   max_idle = 15
-  host_num = 2
+  host_num = 3
   timeout = 30
   sharduser= "sharder"
   shardpassword = "izihGm5UD7KZnCRzbAkFX6PLdtUXK7n3"
   direct = false
 
 [database.mgo.instance.0]
-  host = "10.128.112.181"
+  host = "10.10.40.42"
   port = 7379
   enabled = true
 
 [database.mgo.instance.1]
-  host = "10.128.112.181"
-  port = 7380
+  host = "10.10.40.48"
+  port = 7379
   enabled = true
 
 [database.mgo.instance.2]
-  host = "10.128.112.181"
-  port = 7380
-  enabled = false
-
-[database.mgo.instance.3]
-  host = "10.128.112.181"
-  port = 7380
-  enabled = false
+  host = "10.10.40.49"
+  port = 7379
+  enabled = true
 
 

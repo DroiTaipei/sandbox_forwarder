@@ -12,10 +12,11 @@ import (
 )
 
 const (
-	EMPTY          = ""
-	API_PORT       = 8080
-	FORWARDER_PORT = 8099
-	API_POD_NAME   = "db-api"
+	EMPTY             = ""
+	API_PORT          = 8080
+	FORWARDER_PORT    = 8099
+	FORWARDER_TIMEOUT = 190
+	API_POD_NAME      = "db-api"
 
 	MGO_PORT         = "7379"
 	MGO_MAX_CONN     = 250
@@ -93,7 +94,9 @@ func LoadConfig(configFile string) (ret *Config, err error) {
 		"LOG_KAFKA_ENABLED": "log.kafka_enabled",
 		"LOG_FILE_NAME":     "log.file_name",
 		"LOG_FORMATTER":     "log.formatter",
-		"API_PORT":          "api.port",
+		"API_PORT":          "api.api_port",
+		"FORWARDER_PORT":    "api.forwarder_port",
+		"FORWARDER_TIMEOUT": "api.timeout",
 	}
 
 	env := gconfig.NewEnvironment(mappings)
@@ -109,6 +112,11 @@ func LoadConfig(configFile string) (ret *Config, err error) {
 func (cfgs *Config) GetAPIPort() (api_port, forwarder_port int) {
 	api_port, _ = cfgs.IntOr("api.api_port", API_PORT)
 	forwarder_port, _ = cfgs.IntOr("api.forwarder_port", FORWARDER_PORT)
+	return
+}
+
+func (cfgs *Config) GetTimeout() (timeout int) {
+	timeout, _ = cfgs.IntOr("api.timeout", FORWARDER_TIMEOUT)
 	return
 }
 

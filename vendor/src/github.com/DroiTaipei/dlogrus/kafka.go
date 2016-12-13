@@ -24,7 +24,6 @@ var defaultLevels = []logrus.Level{
 	logrus.ErrorLevel,
 	logrus.WarnLevel,
 	logrus.InfoLevel,
-	logrus.DebugLevel,
 }
 
 type KafkaSetting struct {

@@ -42,7 +42,7 @@ func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	fmt.Println(SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port))
 
-	proxyClient = &fasthttp.HostClient{
+	proxyClient := &fasthttp.HostClient{
 		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port),
 	}
 
@@ -96,7 +96,7 @@ func requestBypass(c *fasthttp.RequestCtx, redirectURL string) {
 
 	fmt.Println(SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT))
 
-	proxyClient = &fasthttp.HostClient{
+	proxyClient := &fasthttp.HostClient{
 		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
 	}
 
@@ -155,8 +155,9 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	req.Header.Set("X-Droi-SlotID", strconv.Itoa(queryResult.SlotID))
 
-	proxyClient = &fasthttp.HostClient{
-		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
+	proxyClient := &fasthttp.HostClient{
+		// Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
+		Addr: "10.2.74.95:" + strconv.Itoa(GO_BUSTER_PORT),
 	}
 
 	req.SetRequestURI(redirectURL)
@@ -180,8 +181,6 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	}
 
 	proxyClient = nil
-
-	c.Logger().Printf("Forward query success, request: %+v, with response: %+v", req, resp)
 
 	postprocessResponse(resp)
 }

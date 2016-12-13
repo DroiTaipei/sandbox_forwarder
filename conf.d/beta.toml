@@ -15,7 +15,7 @@
 [kafka]
   access_log_topic = "forwarder_access"
   standard_log_topic = "forwarder_api"
-  hosts = "10.128.112.186:9092"
+  hosts = "10.0.10.53:9092;10.0.10.52:9092"
   # map to Linger in code
   flush_frequency = 100
   max_connections = 5
@@ -46,23 +46,12 @@
   direct = false
 
 [database.mgo.instance.0]
-  host = "10.128.112.181"
+  host = "10.0.10.55"
   port = 7379
   enabled = true
 
 [database.mgo.instance.1]
-  host = "10.128.112.181"
-  port = 7380
+  host = "10.0.10.56"
+  port = 7379
   enabled = true
-
-[database.mgo.instance.2]
-  host = "10.128.112.181"
-  port = 7380
-  enabled = false
-
-[database.mgo.instance.3]
-  host = "10.128.112.181"
-  port = 7380
-  enabled = false
-
 
