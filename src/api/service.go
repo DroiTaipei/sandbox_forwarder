@@ -156,8 +156,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	req.Header.Set("X-Droi-SlotID", strconv.Itoa(queryResult.SlotID))
 
 	proxyClient := &fasthttp.HostClient{
-		// Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
-		Addr: "10.2.74.95:" + strconv.Itoa(GO_BUSTER_PORT),
+		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
 	}
 
 	req.SetRequestURI(redirectURL)
