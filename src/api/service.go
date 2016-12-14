@@ -2,13 +2,16 @@ package api
 
 import (
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/DroiTaipei/droictx"
 	"github.com/DroiTaipei/mgo/bson"
 	"github.com/DroiTaipei/mongo"
 	"github.com/valyala/fasthttp"
-	"strconv"
-	"time"
 )
+
+const qMark = "?"
 
 func prepareRequest(req *fasthttp.Request) {
 	// do not proxy "Connection" header.
@@ -46,7 +49,7 @@ func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port),
 	}
 
-	req.SetRequestURI(redirectURL)
+	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
 
 	if err := proxyClient.Do(req, resp); err != nil {
 		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
@@ -100,7 +103,7 @@ func requestBypass(c *fasthttp.RequestCtx, redirectURL string) {
 		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
 	}
 
-	req.SetRequestURI(redirectURL)
+	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
 
 	if err := proxyClient.Do(req, resp); err != nil {
 		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
@@ -159,7 +162,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
 	}
 
-	req.SetRequestURI(redirectURL)
+	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
 
 	if err := proxyClient.Do(req, resp); err != nil {
 		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
@@ -182,4 +185,14 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	proxyClient = nil
 
 	postprocessResponse(resp)
+}
+
+func getFullURI(URL string, queryBuf []byte) string {
+	n := len(URL) + len(queryBuf) + 1
+	bs := make([]byte, n)
+	bl := 0
+	bl += copy(bs[bl:], URL)
+	bl += copy(bs[bl:], qMark)
+	bl += copy(bs[bl:], queryBuf)
+	return string(bs)
 }
