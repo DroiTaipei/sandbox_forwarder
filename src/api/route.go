@@ -54,7 +54,31 @@ var (
 
 	requestRoutes = Routes{
 		Route{
+			"GET",
+			"/*url",
+			RequestHandler,
+		},
+
+		Route{
 			"POST",
+			"/*url",
+			RequestHandler,
+		},
+
+		Route{
+			"PATCH",
+			"/*url",
+			RequestHandler,
+		},
+
+		Route{
+			"DELETE",
+			"/*url",
+			RequestHandler,
+		},
+
+		Route{
+			"PUT",
 			"/*url",
 			RequestHandler,
 		},
