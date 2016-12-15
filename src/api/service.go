@@ -166,14 +166,15 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	if err := proxyClient.Do(req, resp); err != nil {
 		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
+		errorLog(err)
 		WriteError(c, ErrForwardRequest)
 		return
 	}
 
 	// Update sandbox access metrics
-	upsertDoc := bson.M{
-		"appid":          appid,
-		"last_update_at": uint(time.Now().Unix()),
+	upsertDoc := SandboxAccessInfo{
+		Appid:      appid,
+		UpdateTime: uint(time.Now().Unix()),
 	}
 
 	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
