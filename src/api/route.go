@@ -85,6 +85,13 @@ var (
 	}
 )
 
+func recv(ctx *fasthttp.RequestCtx) {
+	if rcv := recover(); rcv != nil {
+		logStackOnRecover(ctx, rcv)
+		return
+	}
+}
+
 func logStackOnRecover(ctx *fasthttp.RequestCtx, r interface{}) {
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("[Panic] recover from panic situation: - %v\r\n", r))
@@ -103,7 +110,7 @@ func logStackOnRecover(ctx *fasthttp.RequestCtx, r interface{}) {
 	return
 }
 
-func gloablMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handle {
+func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handle {
 	return fasthttprouter.Handle(func(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 		var v []byte
 		var ctx droictx.Context
@@ -119,9 +126,10 @@ func gloablMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handl
 		doneCh := make(chan struct{})
 		go func() {
 
-			h(c, ps)
+			defer close(doneCh)
+			defer recv(c)
 
-			close(doneCh)
+			h(c, ps)
 		}()
 
 		select {
@@ -145,8 +153,7 @@ func ApiRegist(timeout int) *fasthttprouter.Router {
 	var routingPath string
 	for _, route := range routes {
 		routingPath = fmt.Sprintf("/%s%s", API_VERSION, route.Pattern)
-		// debugf("%s : %s", route.Method, routingPath)
-		r.Handle(route.Method, routingPath, gloablMiddleware(route.HandlerFunc, timeout))
+		r.Handle(route.Method, routingPath, globalMiddleware(route.HandlerFunc, timeout))
 	}
 
 	return r
@@ -156,11 +163,10 @@ func ForwarderRegist(timeout int) *fasthttprouter.Router {
 	r := fasthttprouter.New()
 	r.PanicHandler = logStackOnRecover
 	var routingPath string
-
 	for _, route := range requestRoutes {
 		routingPath = fmt.Sprintf("%s", route.Pattern)
 		debugf("%s : %s", route.Method, routingPath)
-		r.Handle(route.Method, routingPath, gloablMiddleware(route.HandlerFunc, timeout))
+		r.Handle(route.Method, routingPath, globalMiddleware(route.HandlerFunc, timeout))
 	}
 	return r
 }
