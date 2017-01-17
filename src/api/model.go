@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	SERVICE_NAME_PREFIX = "sh-app-hl-sand-"
+	SERVICE_NAME_PREFIX = "sh-app-sand-"
 	SERVICE_NAME_SUFFIX = ".tyd.svc.cluster.local"
 
 	GO_BUSTER_PORT = 8081
