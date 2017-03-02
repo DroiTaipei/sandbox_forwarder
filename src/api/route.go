@@ -34,20 +34,32 @@ var (
 		},
 
 		Route{
-			"POST",
-			"/sandbox/*url",
-			ReceiveRequestBypassGobuster,
-		},
-
-		Route{
-			"POST",
-			"/gobuster/*url",
-			ReceiveRequest,
-		},
-
-		Route{
 			"GET",
-			"/metrics",
+			"/metrics/*url",
+			MetricsHandler,
+		},
+
+		Route{
+			"POST",
+			"/metrics/*url",
+			MetricsHandler,
+		},
+
+		Route{
+			"PUT",
+			"/metrics/*url",
+			MetricsHandler,
+		},
+
+		Route{
+			"PATCH",
+			"/metrics/*url",
+			MetricsHandler,
+		},
+
+		Route{
+			"DELETE",
+			"/metrics/*url",
 			MetricsHandler,
 		},
 	}

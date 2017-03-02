@@ -17,20 +17,6 @@ func HealthCheckHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 	resp.Write(c)
 }
 
-func ReceiveRequestBypassGobuster(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
-
-	key := ps.ByName("url")
-
-	requestBypassGobuster(c, key)
-}
-
-func ReceiveRequest(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
-
-	key := ps.ByName("url")
-
-	requestBypass(c, key)
-}
-
 func MetricsHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 
 	outputMetrics(c)

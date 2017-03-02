@@ -23,115 +23,11 @@ func postprocessResponse(resp *fasthttp.Response) {
 	resp.Header.Del("Connection")
 }
 
-func requestBypassGobuster(c *fasthttp.RequestCtx, redirectURL string) {
-
-	resp := &c.Response
-	req := &c.Request
-
-	prepareRequest(req)
-
-	appid := string(req.Header.Peek("X-Droi-Service-AppID"))
-
-	ctx, _ := c.UserValue(DROI_CTX_KEY).(droictx.Context)
-
-	queryResult := AppSlotMapping{}
-
-	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
-	if err != nil {
-		c.Logger().Printf("db query error: %s\n", err)
-		WriteError(c, ErrAppNotFound)
-		return
-	}
-
-	fmt.Println(SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port))
-
-	proxyClient := &fasthttp.HostClient{
-		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(queryResult.Port),
-	}
-
-	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
-
-	if err := proxyClient.Do(req, resp); err != nil {
-		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
-		WriteError(c, err)
-		return
-	}
-
-	fmt.Printf("Request for debug: %+v\n", req)
-	fmt.Printf("Response for debug: %+v\n", resp)
-
-	// Update sandbox access metrics
-	upsertDoc := bson.M{
-		"appid":          appid,
-		"last_update_at": uint(time.Now().Unix()),
-	}
-
-	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
-		c.Logger().Printf("db query error: %s\n", err)
-		WriteError(c, err)
-		return
-	}
-
-	proxyClient = nil
-
-	postprocessResponse(resp)
-}
-
-func requestBypass(c *fasthttp.RequestCtx, redirectURL string) {
-
-	resp := &c.Response
-	req := &c.Request
-
-	prepareRequest(req)
-
-	appid := string(req.Header.Peek("X-Droi-Service-AppID"))
-
-	ctx, _ := c.UserValue(DROI_CTX_KEY).(droictx.Context)
-
-	queryResult := AppSlotMapping{}
-
-	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
-	if err != nil {
-		fmt.Printf("db query error: %s\n", err)
-		WriteError(c, ErrAppNotFound)
-		return
-	}
-
-	fmt.Println(SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT))
-
-	proxyClient := &fasthttp.HostClient{
-		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
-	}
-
-	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
-
-	if err := proxyClient.Do(req, resp); err != nil {
-		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
-		WriteError(c, err)
-		return
-	}
-
-	fmt.Printf("Request for debug: %+v\n", req)
-	fmt.Printf("Response for debug: %+v\n", resp)
-
-	// Update sandbox access metrics
-	upsertDoc := bson.M{
-		"appid":          appid,
-		"last_update_at": uint(time.Now().Unix()),
-	}
-
-	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
-		fmt.Printf("db query error: %s\n", err)
-		WriteError(c, err)
-		return
-	}
-
-	proxyClient = nil
-
-	postprocessResponse(resp)
-}
-
 func outputMetrics(c *fasthttp.RequestCtx) {
+	// resp := &c.Response
+	req := &c.Request
+
+	c.Logger().Printf("%+v", req)
 }
 
 func updateAppMapping(c *fasthttp.RequestCtx) {
@@ -151,7 +47,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
 	if err != nil {
-		fmt.Printf("db query error: %s\n", err)
+		c.Logger().Printf("db query error: %s\n", err)
 		WriteError(c, ErrAppNotFound)
 		return
 	}
@@ -159,7 +55,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	req.Header.Set("X-Droi-SlotID", strconv.Itoa(queryResult.SlotID))
 
 	proxyClient := &fasthttp.HostClient{
-		Addr: SERVICE_NAME_PREFIX + strconv.Itoa(queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
+		Addr: SERVICE_NAME_PREFIX + fmt.Sprintf("%04d", queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
 	}
 
 	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
