@@ -94,6 +94,12 @@ var (
 			"/*url",
 			RequestHandler,
 		},
+
+		Route{
+			"OPTIONS",
+			"/*url",
+			RequestHandler,
+		},
 	}
 )
 

@@ -47,7 +47,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
 	if err != nil {
-		c.Logger().Printf("db query error: %s\n", err)
+		c.Logger().Printf("query app failed: %s\n", err)
 		WriteError(c, ErrAppNotFound)
 		return
 	}
@@ -74,7 +74,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	}
 
 	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
-		c.Logger().Printf("db query error: %s", err)
+		c.Logger().Printf("upsert metric failed: %s", err)
 		WriteError(c, ErrDatabase)
 		return
 	}
