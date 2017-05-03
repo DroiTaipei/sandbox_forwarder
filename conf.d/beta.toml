@@ -15,7 +15,7 @@
 [kafka]
   access_log_topic = "forwarder_access"
   standard_log_topic = "forwarder_api"
-  hosts = "10.0.10.53:9092;10.0.10.52:9092"
+  hosts = "10.20.40.5:9092;10.20.40.6:9092"
   # map to Linger in code
   flush_frequency = 100
   max_connections = 5
