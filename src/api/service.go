@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -61,8 +62,8 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
 
 	if err := proxyClient.Do(req, resp); err != nil {
-		c.Logger().Printf("error when proxying the request: %s\nRequest %+v\n", err, req)
-		errorLog(err)
+		c.Logger().Printf("error when proxying the request: %s\nRequest: %+v\nResponse: %+v\n", err, req, resp)
+		errorLog(errors.New(fmt.Sprintf("error when proxying the request: %s\nRequest: %+v\nResponse: %+v\n", err, req, resp)))
 		WriteError(c, ErrForwardRequest)
 		return
 	}
