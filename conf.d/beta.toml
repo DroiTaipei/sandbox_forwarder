@@ -46,12 +46,12 @@
   direct = false
 
 [database.mgo.instance.0]
-  host = "10.0.10.55"
+  host = "10.20.40.1"
   port = 7379
   enabled = true
 
 [database.mgo.instance.1]
-  host = "10.0.10.56"
+  host = "10.20.40.26"
   port = 7379
   enabled = true
 
