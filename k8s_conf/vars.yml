@@ -1,0 +1,99 @@
+---
+## common_start
+service_name: tpe-sandbox-forwarder #necessary
+namespace: tyd
+kind: Deployment #necessary(either[Deployment, DaemonSet])
+labels: #necessary(least one, customer key & value)
+  name: tpe-sandbox-forwarder
+  owner: George.Lee
+  app: tpe-sandbox-forwarder
+## common_end
+
+## deployment_variable_start
+replicas_num: #necessary
+  alpha: 3
+  beta: 3
+  prod: 3
+
+containers: #necessary
+  sandbox-forwarder: #least one(key=name)
+    image_module: backend #necessary(this container image's module)
+    imagePullPolicy: Always #necessary(either[Always, IfNotPresent])
+    container_ports: #necessary(least one)
+      forwarder-1: 8090
+      forwarder-2: 8099
+#    volumeMounts: #optional
+#      host-rcv: /rcv #least one(key=name & value=mountpath)
+#    custom_env: #optional (least one each phase if defined)
+#      alpha:
+#       key: "value" 
+#      beta:
+#       key: "value"
+#      prod:
+#       key: "value"
+#    livenessProbe: #optional(all necessary if defined)
+#      httpGet:
+#        path: health
+#       port: 60305
+#        scheme: HTTP
+#      failureThreshold: 3
+#      initialDelaySeconds: 10
+#      periodSeconds: 5
+#    successThreshold: 1
+#      timeoutSeconds: 1
+#   readinessProbe: #optional(all necessary if defined)
+#     httpGet:
+#       path: path
+#       port: 80
+#       scheme: HTTP
+#     failureThreshold: 3
+#     initialDelaySeconds: 10
+#     periodSeconds: 5
+#     successThreshold: 1
+#     timeoutSeconds: 1
+
+#volumes: #optional
+#  host-rcv: #necessary(key=name & value=either[emptyDir, path, nfs])
+#    emptyDir: "{}"         #either 
+#    path: "/droi"          #either 
+#    nfs:                   #either 
+#      server: "10.0.0.1"
+#      path: "/droi"
+## deployment_variable_end
+
+## svc_variable_start
+svc: #necessary(either[ClusterIP, NodePort])
+#  ClusterIP: #either 
+#    ip: "none" #optional
+#    node_ports: #least one(key=name & value=port&targetPort)
+#      file-upload-port:
+#        port: 80
+#        targetPort: 80
+#      backend-file-upload-port:
+#        port: 8000
+#        targetPort: 8000
+  NodePort: #either
+    node_ports: #least one(key=name & value=port&targetPort)
+      tpe-sandbox-forwarder-port:
+        port: 8090
+        targetPort: 8090
+        nodePort: 30119
+      tpe-sandbox-api-port:
+        port: 8099
+        targetPort: 8099
+        nodePort: 30120  
+## svc_variable_end
+
+## svc_dev_variable_start
+hl_service: false
+## svc_dev_variable_end
+
+##run_command_start
+start_command: #necessary
+  pre_cmd: #optional (least one if defined)
+    - ln -s '/sandbox-forwarder/conf.d/'${PHASE}'.toml' /sandbox-forwarder/conf.d/current.toml
+  cmd: "/sandbox-forwarder/sandbox_forwarder"
+  args: "-config /sandbox-forwarder/conf.d/current.toml"
+##run_command_end
+
+## other ( customer define )
