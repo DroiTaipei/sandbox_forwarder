@@ -17,12 +17,13 @@ const (
 	// ErrDataNotFound        = droipkg.ConstDroiError("1130010 Data Not Found")
 	// ErrResourceBound       = droipkg.ConstDroiError("1130011 Resource Bound")
 
-	ErrUnknown        = droipkg.ConstDroiError("1160000 Unknown Error")
-	ErrPanic          = droipkg.ConstDroiError("1160001 Panic Error")
-	ErrAppNotFound    = droipkg.ConstDroiError("1160002 App Not Found")
-	ErrForwardRequest = droipkg.ConstDroiError("1160003 Forward Request Error")
-	ErrForwardTimeout = droipkg.ConstDroiError("1160004 Forward Request Timeout")
-	ErrDatabase       = droipkg.ConstDroiError("1160005 Database Error")
+	ErrUnknown          = droipkg.ConstDroiError("1160000 Unknown Error")
+	ErrPanic            = droipkg.ConstDroiError("1160001 Panic Error")
+	ErrAppNotFound      = droipkg.ConstDroiError("1160002 App Not Found")
+	ErrForwardRequest   = droipkg.ConstDroiError("1160003 Forward Request Error")
+	ErrForwardTimeout   = droipkg.ConstDroiError("1160004 Forward Request Timeout")
+	ErrDatabase         = droipkg.ConstDroiError("1160005 Database Error")
+	ErrAccessRestrictrd = droipkg.ConstDroiError("1160006 Access Right Restricted")
 )
 
 func getDroiErrorCode(err error) int {
