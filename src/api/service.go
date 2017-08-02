@@ -53,6 +53,12 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 		return
 	}
 
+	if queryResult.SandboxZoneID == 3000 {
+		c.Logger().Printf("This app:%s has been suspended.\n", queryResult.AppID)
+		WriteError(c, ErrAccessRestrictrd)
+		return
+	}
+
 	req.Header.Set("X-Droi-SlotID", strconv.Itoa(queryResult.SlotID))
 
 	proxyClient := &fasthttp.HostClient{
