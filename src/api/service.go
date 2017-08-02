@@ -54,7 +54,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	}
 
 	if queryResult.SandboxZoneID == 3000 {
-		c.Logger().Printf("This app has no access right.\n")
+		c.Logger().Printf("This app:%s has been suspended.\n", queryResult.AppID)
 		WriteError(c, ErrAccessRestrictrd)
 		return
 	}

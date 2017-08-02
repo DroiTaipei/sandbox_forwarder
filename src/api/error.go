@@ -23,7 +23,7 @@ const (
 	ErrForwardRequest   = droipkg.ConstDroiError("1160003 Forward Request Error")
 	ErrForwardTimeout   = droipkg.ConstDroiError("1160004 Forward Request Timeout")
 	ErrDatabase         = droipkg.ConstDroiError("1160005 Database Error")
-	ErrAccessRestrictrd = droipkg.ConstDroiError("1160006 Access Right Restricted")
+	ErrAccessRestrictrd = droipkg.ConstDroiError("1160006 This app has been suspended, please contact to your account manager")
 )
 
 func getDroiErrorCode(err error) int {
