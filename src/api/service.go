@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net"
 	"strconv"
 	"time"
 
@@ -64,6 +65,12 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	proxyClient := &fasthttp.HostClient{
 		Addr: SERVICE_NAME_PREFIX + fmt.Sprintf("%04d", queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX + ":" + strconv.Itoa(GO_BUSTER_PORT),
 	}
+
+	ipList, lookErr := net.LookupIP(SERVICE_NAME_PREFIX + fmt.Sprintf("%04d", queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX)
+	if lookErr != nil {
+		debugf("Lookup error: %+v", err)
+	}
+	debugf("Lookup IP: %+v", ipList)
 
 	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
 
