@@ -153,7 +153,8 @@ func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handl
 		select {
 		case <-doneCh:
 
-			debugf("Forward query success, request: %+v, with response: %+v", &c.Request, &c.Response)
+			// return
+			debugf("Request detail: request: %+v, with response: %+v", &c.Request, &c.Response)
 
 		case <-time.After(time.Duration(timeout) * time.Second):
 

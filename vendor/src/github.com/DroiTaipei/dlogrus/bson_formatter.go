@@ -3,8 +3,9 @@ package dlogrus
 import (
 	"encoding/binary"
 	"fmt"
+
+	"github.com/DroiTaipei/logrus"
 	"github.com/DroiTaipei/mgo/bson"
-	"github.com/devopstaku/logrus"
 )
 
 const (

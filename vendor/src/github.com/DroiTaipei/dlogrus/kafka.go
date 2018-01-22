@@ -6,24 +6,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/devopstaku/logrus"
+	"github.com/DroiTaipei/logrus"
 	"github.com/elodina/siesta"
 	sp "github.com/elodina/siesta-producer"
 )
 
 const (
-	MAX_RETRY         = 20
 	STANDARD_RETRY    = 3
 	KAFKA_NO_RESPONSE = 0
 )
 
 var defaultLevels = []logrus.Level{
 	logrus.PanicLevel,
-	logrus.DebugLevel,
 	logrus.FatalLevel,
 	logrus.ErrorLevel,
 	logrus.WarnLevel,
 	logrus.InfoLevel,
+	logrus.DebugLevel,
 }
 
 type KafkaSetting struct {
@@ -38,6 +37,9 @@ type KafkaSetting struct {
 	RequiredAcks            int
 	LocalQueueLength        int
 	EnqueueTimeout          time.Duration
+	MetadataRetries         int
+	MetadataBackoff         time.Duration
+	MetadataTTL             time.Duration
 }
 
 type kafkaHook struct {
@@ -64,6 +66,9 @@ func NewKafkaSetting() KafkaSetting {
 		RequiredAcks:            1,
 		LocalQueueLength:        1024,
 		EnqueueTimeout:          1000 * time.Millisecond,
+		MetadataRetries:         5,
+		MetadataBackoff:         5 * time.Second,
+		MetadataTTL:             5 * time.Minute,
 	}
 }
 
@@ -80,7 +85,9 @@ func kafkaConnect(ks KafkaSetting) (*sp.KafkaProducer, error) {
 	config.BrokerList = ks.Hosts
 	config.MaxConnections = ks.MaxConnections
 	config.MaxConnectionsPerBroker = ks.MaxConnectionsPerBroker
-	config.MetadataRetries = STANDARD_RETRY
+	config.MetadataRetries = ks.MetadataRetries
+	config.MetadataBackoff = ks.MetadataBackoff
+	config.MetadataTTL = ks.MetadataTTL
 	connector, err := siesta.NewDefaultConnector(config)
 	if err != nil {
 		return nil, err

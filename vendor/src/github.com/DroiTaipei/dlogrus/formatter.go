@@ -3,7 +3,8 @@ package dlogrus
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/devopstaku/logrus"
+
+	"github.com/DroiTaipei/logrus"
 )
 
 const (

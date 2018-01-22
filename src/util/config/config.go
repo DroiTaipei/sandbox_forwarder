@@ -17,6 +17,9 @@ const (
 	FORWARDER_PORT    = 8099
 	FORWARDER_TIMEOUT = 190
 	API_POD_NAME      = "db-api"
+	// API_MODE          = "release"
+	// API_VERSION       = "v1"
+	// API_TIMEOUT       = "30"
 
 	MGO_PORT         = "7379"
 	MGO_MAX_CONN     = 250
@@ -53,7 +56,7 @@ type Config struct {
 func (cfgs *Config) GetUniqSubKeys(prefix string) []string {
 	kv, _ := cfgs.Settings()
 	keys := []string{}
-	for k, _ := range kv {
+	for k := range kv {
 		if strings.HasPrefix(k, prefix) {
 			tokens := strings.Split(strings.TrimPrefix(k, prefix), ".")
 			subKey := tokens[0] // I only interest in the first level subkeys
@@ -183,6 +186,9 @@ func (cfgs *Config) GetKafkaInfos() (ks dlogrus.KafkaSetting, accessLogTopic, st
 		RequiredAcks:            ra,
 		LocalQueueLength:        queueLength,
 		EnqueueTimeout:          time.Duration(enqueueTimeout) * time.Millisecond,
+		MetadataRetries:         10,
+		MetadataBackoff:         time.Duration(10) * time.Second,
+		MetadataTTL:             time.Duration(300) * time.Second,
 	}
 	return
 }
@@ -232,3 +238,13 @@ func (cfgs *Config) GetMgoDBInfos() (ret []*mongo.DBInfo) {
 		mgoDefaultPassword, mgoDefaultDatabase, mgoDefaultAuthDatabase, mgoDefaultTimeout, mgoMaxConn, mgoMaxIdle, mgoShardUser, mgoShardPassword, mgoDirect))
 	return
 }
+
+// func (cfgs *Config) GetApiConfigs() (ret map[string]string) {
+// 	ret["api_port"], _ = cfgs.StringOr("api.api_port", API_PORT)
+// 	ret["forwarder_port"], _ = cfgs.StringOr("api.forwarder_port", FORWARDER_PORT)
+// 	ret["mode"], _ = cfgs.StringOr("api.mode", API_MODE)
+// 	ret["version"], _ = cfgs.StringOr("api.version", API_VERSION)
+// 	ret["readTimeout"], _ = cfgs.StringOr("api.readTimeout", API_TIMEOUT)
+// 	ret["writeTimeout"], _ = cfgs.StringOr("api.writeTimeout", API_TIMEOUT)
+// 	return ret
+// }

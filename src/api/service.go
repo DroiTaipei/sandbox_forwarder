@@ -1,13 +1,13 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
 	"time"
 
 	"github.com/DroiTaipei/droictx"
+	// "github.com/DroiTaipei/droipkg"
 	"github.com/DroiTaipei/mgo/bson"
 	"github.com/DroiTaipei/mongo"
 	"github.com/valyala/fasthttp"
@@ -68,15 +68,18 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	ipList, lookErr := net.LookupIP(SERVICE_NAME_PREFIX + fmt.Sprintf("%04d", queryResult.SandboxZoneID) + SERVICE_NAME_SUFFIX)
 	if lookErr != nil {
-		debugf("Lookup error: %+v", err)
+		wrapErr := ErrForwardRequest.Wrap(fmt.Sprintf("Lookup domain error: %+v", lookErr))
+		ctxLog(ctx, wrapErr)
+		WriteError(c, ErrForwardRequest)
+		return
 	}
 	debugf("Lookup IP: %+v", ipList)
 
 	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
 
 	if err := proxyClient.Do(req, resp); err != nil {
-		c.Logger().Printf("error when proxying the request: %s\nRequest: %+v\nResponse: %+v\n", err, req, resp)
-		errorLog(errors.New(fmt.Sprintf("error when proxying the request: %s\nRequest: %+v\nResponse: %+v\n", err, req, resp)))
+		wrapErr := ErrForwardRequest.Wrap(fmt.Sprintf("Proxying request error: %s\nRequest: %#v\nResponse: %#v\n", err.Error(), req, resp))
+		ctxLog(ctx, wrapErr)
 		WriteError(c, ErrForwardRequest)
 		return
 	}
@@ -88,7 +91,8 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	}
 
 	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
-		c.Logger().Printf("upsert metric failed: %s", err)
+		wrapErr := ErrDatabase.Wrap(fmt.Sprintf("Update mongo error: %#v", err))
+		ctxLog(ctx, wrapErr)
 		WriteError(c, ErrDatabase)
 		return
 	}

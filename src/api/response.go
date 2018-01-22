@@ -42,6 +42,5 @@ func WriteError(c *fasthttp.RequestCtx, err error) {
 	resp := NewResponse()
 	resp.Message = err.Error()
 	resp.Code = getDroiErrorCode(err)
-	errorLog(err)
 	resp.Write(c)
 }
