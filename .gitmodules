@@ -1,0 +1,3 @@
+[submodule "src/github.com"]
+	path = src/github.com
+	url = git@github.com:DroiTaipei/droipkg.git

@@ -1,0 +1,18 @@
+// Use the protocol buffer compiler to generate client and server code.
+// $ protoc --go_out=plugins=grpc:.
+
+syntax = "proto3";
+
+package helloworld;
+
+message HelloRequest {
+    string name = 1;
+}
+
+message HelloReply {
+    string name = 1;
+}
+
+service Greeter {
+    rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
