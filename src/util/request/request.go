@@ -37,7 +37,7 @@ func init() {
 }
 
 func fetchFromHeader(c *fasthttp.RequestHeader) droictx.Context {
-	r := droictx.Context{}
+	r := &droictx.DoneContext{}
 	keyMap := map[string]string{
 		KEY_APP_ID:       LOG_KEY_APP_ID,
 		KEY_APP_ID_MODE:  LOG_KEY_APP_ID_MODE,

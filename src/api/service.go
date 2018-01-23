@@ -5,9 +5,9 @@ import (
 	"net"
 	"strconv"
 	"time"
+	"util/trace"
 
 	"github.com/DroiTaipei/droictx"
-	// "github.com/DroiTaipei/droipkg"
 	"github.com/DroiTaipei/mgo/bson"
 	"github.com/DroiTaipei/mongo"
 	"github.com/valyala/fasthttp"
@@ -47,15 +47,18 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	queryResult := AppSlotMapping{}
 
-	err := mongo.QueryOne(ctx, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
+	err := mongo.QueryOne(ctx, MGO_SANDBOX_DB_NAME, MGO_SANDBOX_APP_COL, &queryResult, bson.M{"appid": appid, "status": APP_ACTIVE}, nil, 0, 10)
 	if err != nil {
-		c.Logger().Printf("query app failed: %s\n", err)
+		wrapErr := ErrAppNotFound.Wrap(fmt.Sprintf("App ID %s not found: %+v", appid, err))
+		ctxLog(ctx, wrapErr)
 		WriteError(c, ErrAppNotFound)
 		return
 	}
 
 	if queryResult.SandboxZoneID == 3000 {
-		c.Logger().Printf("This app:%s has been suspended.\n", queryResult.AppID)
+		// c.Logger().Printf("This app:%s has been suspended.\n", queryResult.AppID)
+		wrapErr := ErrAppNotFound.Wrap(fmt.Sprintf("This App:%s has been suspended", appid))
+		ctxLog(ctx, wrapErr)
 		WriteError(c, ErrAccessRestrictrd)
 		return
 	}
@@ -76,6 +79,8 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 	debugf("Lookup IP: %+v", ipList)
 
 	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
+	sp := trace.CreateChildSpanByContextF(droictx.ComponentForwarder, ctx, req)
+	trace.InjectSpanF(sp, req)
 
 	if err := proxyClient.Do(req, resp); err != nil {
 		wrapErr := ErrForwardRequest.Wrap(fmt.Sprintf("Proxying request error: %s\nRequest: %#v\nResponse: %#v\n", err.Error(), req, resp))
@@ -90,7 +95,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 		UpdateTime: uint(time.Now().Unix()),
 	}
 
-	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
+	if _, err := mongo.Upsert(ctx, MGO_SANDBOX_DB_NAME, MGO_SANDBOX_METRICS_COL, bson.M{"appid": appid}, upsertDoc); err != nil {
 		wrapErr := ErrDatabase.Wrap(fmt.Sprintf("Update mongo error: %#v", err))
 		ctxLog(ctx, wrapErr)
 		WriteError(c, ErrDatabase)

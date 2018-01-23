@@ -10,6 +10,7 @@ const (
 
 	GO_BUSTER_PORT = 8081
 
+	MGO_SANDBOX_DB_NAME     = "zone"
 	MGO_SANDBOX_APP_COL     = "SandboxAppZoneMapping"
 	MGO_SANDBOX_METRICS_COL = "SandboxAccessMetrics"
 
@@ -17,8 +18,7 @@ const (
 )
 
 var (
-	mutex = &sync.Mutex{}
-
+	mutex    = &sync.Mutex{}
 	connInfo map[string]AppSlotMapping
 )
 

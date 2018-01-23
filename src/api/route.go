@@ -7,8 +7,10 @@ import (
 	"time"
 
 	ur "util/request"
+	"util/trace"
 
 	"github.com/DroiTaipei/droictx"
+	"github.com/DroiTaipei/droitrace"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 )
@@ -131,7 +133,7 @@ func logStackOnRecover(ctx *fasthttp.RequestCtx, r interface{}) {
 func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handle {
 	return fasthttprouter.Handle(func(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
 		var v []byte
-		var ctx droictx.Context
+		ctx := &droictx.DoneContext{}
 		for headerKey, fieldkey := range ur.KeyMap {
 			v = c.Request.Header.Peek(headerKey)
 			if len(v) > 0 {
@@ -140,6 +142,11 @@ func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handl
 		}
 		c.SetUserValue(DROI_CTX_KEY, ctx)
 		HTTPAccessLog(ctx, string(c.Method()), string(c.Path()), c.RemoteAddr().String(), c.Request.Header.ContentLength())
+
+		// Add trace
+		sp := trace.CreateSpanFromReqF(droictx.ComponentGoBuster, &c.Request, ctx)
+		defer sp.Finish()
+		ctx.Set(droitrace.ParentSpan, sp)
 
 		doneCh := make(chan struct{})
 		go func() {
@@ -153,7 +160,6 @@ func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handl
 		select {
 		case <-doneCh:
 
-			// return
 			debugf("Request detail: request: %+v, with response: %+v", &c.Request, &c.Response)
 
 		case <-time.After(time.Duration(timeout) * time.Second):

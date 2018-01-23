@@ -23,13 +23,31 @@
 		{
 			"importpath": "github.com/DroiTaipei/droictx",
 			"repository": "https://github.com/DroiTaipei/droictx",
-			"revision": "d61430e4f551bbe7ced4ea5c761471f942ce7597",
+			"revision": "502a22780acbe7bb6d9a65a1da84c1e59da3bfc7",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/droitrace",
+			"repository": "https://github.com/DroiTaipei/droitrace",
+			"revision": "f55cc3a58025fdc5c04bdfd43f80cb8feca87340",
 			"branch": "master"
 		},
 		{
 			"importpath": "github.com/DroiTaipei/go-config",
 			"repository": "https://github.com/DroiTaipei/go-config",
 			"revision": "710646a45582fde23bf77bacbc2f38008dc7ffc2",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/go-observer",
+			"repository": "https://github.com/DroiTaipei/go-observer",
+			"revision": "2174bea3c41832872e080581bb1c7fe2deb2a9d2",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/jaeger-client-go",
+			"repository": "https://github.com/DroiTaipei/jaeger-client-go",
+			"revision": "9eb6b12c4ff4d768d6303bcfb5b6fb41deb0883f",
 			"branch": "master"
 		},
 		{
@@ -47,8 +65,40 @@
 		{
 			"importpath": "github.com/DroiTaipei/mongo",
 			"repository": "https://github.com/DroiTaipei/mongo",
-			"revision": "94629dd05b7e157cf20b76d578d05be17326335f",
+			"revision": "b6dae0f923ef9ce312072e1a3037951fcaf62fb6",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/opentracing-go",
+			"repository": "https://github.com/DroiTaipei/opentracing-go",
+			"revision": "4efcf8c4d810ce9ac5d73a8576e80d331eb4fab4",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/thrift/lib/go/thrift",
+			"repository": "https://github.com/DroiTaipei/thrift",
+			"revision": "0dd823580c78a79ae9696eb9b3650e400fff140f",
+			"branch": "master",
+			"path": "/lib/go/thrift"
+		},
+		{
+			"importpath": "github.com/DroiTaipei/zipkin-go-opentracing",
+			"repository": "https://github.com/DroiTaipei/zipkin-go-opentracing",
+			"revision": "acc37d58aa5c07398367c096cc864ed71d5020c4",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/Shopify/sarama",
+			"repository": "https://github.com/Shopify/sarama",
+			"revision": "0f4f8caef994ca7e4f9072c1858b7c6761ed498f",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/apache/thrift/lib/go/thrift",
+			"repository": "https://github.com/apache/thrift",
+			"revision": "b636ffb613ab49e0f037fbe696d28a4b17a72c5f",
+			"branch": "master",
+			"path": "/lib/go/thrift"
 		},
 		{
 			"importpath": "github.com/beorn7/perks/quantile",
@@ -70,10 +120,29 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/codahale/hdrhistogram",
+			"repository": "https://github.com/codahale/hdrhistogram",
+			"revision": "3a0bb77429bd3a61596f5e8a3172445844342120",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/codegangsta/cli",
 			"repository": "https://github.com/codegangsta/cli",
 			"revision": "d53eb991652b1d438abdd34ce4bfa3ef1539108e",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/crossdock/crossdock-go",
+			"repository": "https://github.com/crossdock/crossdock-go",
+			"revision": "049aabb0122b03bc9bd30cab8f3f91fb60166361",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/davecgh/go-spew/spew",
+			"repository": "https://github.com/davecgh/go-spew",
+			"revision": "ecdeabc65495df2dec95d7c4a4c3e021903035e5",
+			"branch": "master",
+			"path": "/spew"
 		},
 		{
 			"importpath": "github.com/devopstaku/logrus",
@@ -85,6 +154,25 @@
 			"importpath": "github.com/dustin/go-broadcast",
 			"repository": "https://github.com/dustin/go-broadcast",
 			"revision": "f664265f5a662fb4d1df7f3533b1e8d0e0277120",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/eapache/go-resiliency/breaker",
+			"repository": "https://github.com/eapache/go-resiliency",
+			"revision": "ef9aaa7ea8bd2448429af1a77cf41b2b3b34bdd6",
+			"branch": "master",
+			"path": "/breaker"
+		},
+		{
+			"importpath": "github.com/eapache/go-xerial-snappy",
+			"repository": "https://github.com/eapache/go-xerial-snappy",
+			"revision": "bb955e01b9346ac19dc29eb16586c90ded99a98c",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/eapache/queue",
+			"repository": "https://github.com/eapache/queue",
+			"revision": "44cc805cf13205b55f69e14bcb69867d1ae92f98",
 			"branch": "master"
 		},
 		{
@@ -128,6 +216,19 @@
 			"repository": "https://github.com/go-ini/ini",
 			"revision": "6e4869b434bd001f6983749881c7ead3545887d8",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/go-logfmt/logfmt",
+			"repository": "https://github.com/go-logfmt/logfmt",
+			"revision": "390ab7935ee28ec6b286364bba9b4dd6410cb3d5",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/gogo/protobuf/proto",
+			"repository": "https://github.com/gogo/protobuf",
+			"revision": "26de2f9a7d3b1826f275e7a97c8cad5080589426",
+			"branch": "master",
+			"path": "/proto"
 		},
 		{
 			"importpath": "github.com/golang/glog",
@@ -228,10 +329,42 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/mwitkow/go-conntrack",
+			"repository": "https://github.com/mwitkow/go-conntrack",
+			"revision": "cc309e4a22231782e8893f3c35ced0967807a33e",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/opentracing/opentracing-go",
+			"repository": "https://github.com/opentracing/opentracing-go",
+			"revision": "216894e5277dc6098f93ceca97beb6101610b418",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/pierrec/lz4",
+			"repository": "https://github.com/pierrec/lz4",
+			"revision": "ed8d4cc3b461464e69798080a0092bd028910298",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/pierrec/xxHash/xxHash32",
+			"repository": "https://github.com/pierrec/xxHash",
+			"revision": "a0006b13c722f7f12368c00a3d3c2ae8a999a0c6",
+			"branch": "master",
+			"path": "/xxHash32"
+		},
+		{
 			"importpath": "github.com/pkg/errors",
 			"repository": "https://github.com/pkg/errors",
 			"revision": "839d9e913e063e28dfd0e6c7b7512793e0a48be9",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/pmezard/go-difflib/difflib",
+			"repository": "https://github.com/pmezard/go-difflib",
+			"revision": "792786c7400a136282c1664665ae0a8db921c6c2",
+			"branch": "master",
+			"path": "/difflib"
 		},
 		{
 			"importpath": "github.com/prometheus/client_golang/prometheus",
@@ -275,6 +408,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/rcrowley/go-metrics",
+			"repository": "https://github.com/rcrowley/go-metrics",
+			"revision": "e181e095bae94582363434144c61a9653aff6e50",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/sirupsen/logrus",
 			"repository": "https://github.com/sirupsen/logrus",
 			"revision": "d682213848ed68c0a260ca37d6dd5ace8423f5ba",
@@ -285,6 +424,25 @@
 			"repository": "https://github.com/thinkerou/favicon",
 			"revision": "94a442a49da6e2d44bdd5e0d2e2e185c43a19d93",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/uber-go/atomic",
+			"repository": "https://github.com/uber-go/atomic",
+			"revision": "8474b86a5a6f79c443ce4b2992817ff32cf208b8",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/uber/jaeger-lib/metrics",
+			"repository": "https://github.com/uber/jaeger-lib",
+			"revision": "34d9cc24e47ab70783050b52f79c06eb3ac850ba",
+			"branch": "master",
+			"path": "/metrics"
+		},
+		{
+			"importpath": "github.com/uber/tchannel-go",
+			"repository": "https://github.com/uber/tchannel-go",
+			"revision": "f7c2fc578ef3261b768f30367e335c9c2e39f635",
+			"branch": "dev"
 		},
 		{
 			"importpath": "github.com/ugorji/go/codec",
@@ -330,6 +488,24 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "go.uber.org/atomic",
+			"repository": "https://github.com/uber-go/atomic",
+			"revision": "8474b86a5a6f79c443ce4b2992817ff32cf208b8",
+			"branch": "master"
+		},
+		{
+			"importpath": "go.uber.org/multierr",
+			"repository": "https://github.com/uber-go/multierr",
+			"revision": "ddea229ff1dff9e6fe8a6c0344ac73b09e81fce5",
+			"branch": "master"
+		},
+		{
+			"importpath": "go.uber.org/zap",
+			"repository": "https://github.com/uber-go/zap",
+			"revision": "f85c78b1dd998214c5f2138155b320a4a43fbe36",
+			"branch": "master"
+		},
+		{
 			"importpath": "golang.org/x/crypto/acme",
 			"repository": "https://go.googlesource.com/crypto",
 			"revision": "a6600008915114d9c087fad9f03d75087b1a74df",
@@ -349,6 +525,13 @@
 			"revision": "94eea52f7b742c7cbe0b03b22f0c4c8631ece122",
 			"branch": "master",
 			"path": "/ssh/terminal"
+		},
+		{
+			"importpath": "golang.org/x/net/bpf",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec",
+			"branch": "master",
+			"path": "/bpf"
 		},
 		{
 			"importpath": "golang.org/x/net/context",
@@ -372,11 +555,39 @@
 			"path": "/idna"
 		},
 		{
+			"importpath": "golang.org/x/net/internal/iana",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec",
+			"branch": "master",
+			"path": "/internal/iana"
+		},
+		{
+			"importpath": "golang.org/x/net/internal/socket",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec",
+			"branch": "master",
+			"path": "/internal/socket"
+		},
+		{
 			"importpath": "golang.org/x/net/internal/timeseries",
 			"repository": "https://go.googlesource.com/net",
 			"revision": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec",
 			"branch": "master",
 			"path": "/internal/timeseries"
+		},
+		{
+			"importpath": "golang.org/x/net/ipv4",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec",
+			"branch": "master",
+			"path": "/ipv4"
+		},
+		{
+			"importpath": "golang.org/x/net/ipv6",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec",
+			"branch": "master",
+			"path": "/ipv6"
 		},
 		{
 			"importpath": "golang.org/x/net/lex/httplex",

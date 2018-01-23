@@ -6,7 +6,8 @@ import (
 	"github.com/DroiTaipei/dlogrus"
 	"github.com/DroiTaipei/mongo"
 
-	gconfig "github.com/zpatrick/go-config"
+	// gconfig "github.com/zpatrick/go-config"
+	"github.com/DroiTaipei/droipkg/config"
 	"strings"
 	"time"
 )
@@ -29,6 +30,7 @@ const (
 	MGO_AUTHDATABASE = "admin"
 	MGO_TIMEOUT      = 300
 	MGO_SHARDUSER    = "sharder"
+	MGO_SECONDARY    = true
 
 	LOG_FILE_NAME = "db_api.log"
 	LOG_VERSION   = "1"
@@ -47,10 +49,25 @@ const (
 	MAX_BATCH_SIZE             = 16384
 	QUEUE_LENGTH               = 1024
 	ENQUEUE_TIMEOUT            = 1000
+
+	// Jaeger default config
+	JAEGER_HOST           = "tpe-jaeger-agent"
+	JAEGER_PORT           = 6831
+	JAEGER_SAMPLE_RATE    = 0.5
+	JAEGER_QUEUE_SIZE     = 65536
+	JAEGER_FLUSH_INTERVAL = 60 * time.Second
 )
 
 type Config struct {
-	*gconfig.Config
+	*config.Config
+}
+
+type TracerOption struct {
+	Ip                  string        `toml:"Ip"`
+	Port                int           `toml:"Port"`
+	SampleRate          float64       `toml:"SampleRate"`
+	QueueSize           int           `toml:"QueueSize"`
+	BufferFlushInterval time.Duration `toml:"BufferFlushInterval"`
 }
 
 func (cfgs *Config) GetUniqSubKeys(prefix string) []string {
@@ -76,8 +93,6 @@ func (cfgs *Config) GetUniqSubKeys(prefix string) []string {
 }
 
 func LoadConfig(configFile string) (ret *Config, err error) {
-	tomlProvider := gconfig.NewTOMLFile(configFile)
-
 	mappings := map[string]string{
 		"KAFKA_STD_TOPIC":                  "kafka.standard_log_topic",
 		"KAFKA_ACC_TOPIC":                  "kafka.access_log_topic",
@@ -102,13 +117,15 @@ func LoadConfig(configFile string) (ret *Config, err error) {
 		"FORWARDER_TIMEOUT": "api.timeout",
 	}
 
-	env := gconfig.NewEnvironment(mappings)
-	cfgs := gconfig.NewConfig([]gconfig.Provider{tomlProvider, env})
-	err = cfgs.Load()
+	opts := &config.Options{
+		EnvMap: mappings,
+	}
+	cfgs, err := config.LoadConfig(configFile, opts)
 	if err != nil {
-		return
+		panic(err)
 	}
 	ret = &Config{cfgs}
+
 	return
 }
 
@@ -206,22 +223,23 @@ func (cfgs *Config) GetMgoDBInfos() (ret []*mongo.DBInfo) {
 	fmt.Printf("%+v\n", subkeys)
 
 	var key string
-	var mgoDirect bool
-	var mgoMaxConn, mgoMaxIdle, mgoDefaultTimeout int
-	var mgoDefaultPort, mgoDefaultUser, mgoDefaultPassword, mgoDefaultDatabase, mgoDefaultAuthDatabase, mgoShardUser, mgoShardPassword string
+	var mgoDirect, mgoSecondary bool
+	var mgoMaxConn, mgoDefaultTimeout int
+	var mgoDefaultPort, mgoDefaultUser, mgoDefaultPassword, mgoDefaultAuthDatabase string
 	var name string
 
 	name, _ = cfgs.StringOr("database.mgo.default.name", "")
 	mgoMaxConn, _ = cfgs.IntOr("database.mgo.default.max_conn", MGO_MAX_CONN)
-	mgoMaxIdle, _ = cfgs.IntOr("database.mgo.default.max_idle", MGO_MAX_IDLE)
+	// mgoMaxIdle, _ = cfgs.IntOr("database.mgo.default.max_idle", MGO_MAX_IDLE)
 	mgoDefaultUser, _ = cfgs.StringOr("database.mgo.default.user", MGO_USER)
 	mgoDefaultPassword, _ = cfgs.StringOr("database.mgo.default.password", "")
-	mgoDefaultDatabase, _ = cfgs.StringOr("database.mgo.default.database", MGO_DATABASE)
+	// mgoDefaultDatabase, _ = cfgs.StringOr("database.mgo.default.database", MGO_DATABASE)
 	mgoDefaultAuthDatabase, _ = cfgs.StringOr("database.mgo.default.authdatabase", MGO_AUTHDATABASE)
 	mgoDefaultTimeout, _ = cfgs.IntOr("database.mgo.default.timeout", MGO_TIMEOUT)
-	mgoShardUser, _ = cfgs.StringOr("database.mgo.default.sharduser", MGO_SHARDUSER)
-	mgoShardPassword, _ = cfgs.StringOr("database.mgo.default.shardpassword", "")
+	// mgoShardUser, _ = cfgs.StringOr("database.mgo.default.sharduser", MGO_SHARDUSER)
+	// mgoShardPassword, _ = cfgs.StringOr("database.mgo.default.shardpassword", "")
 	mgoDirect, _ = cfgs.Bool("database.mgo.default.direct")
+	mgoSecondary, _ = cfgs.BoolOr("database.mgo.default.secondary", MGO_SECONDARY)
 	mgoAddrs := []string{}
 	b := len(subkeys)
 	for i := 0; i < b; i++ {
@@ -234,9 +252,25 @@ func (cfgs *Config) GetMgoDBInfos() (ret []*mongo.DBInfo) {
 			mgoAddrs = append(mgoAddrs, host+":"+port)
 		}
 	}
+	// ret = append(ret, mongo.NewDBInfo(name, mgoAddrs, mgoDefaultUser,
+	// mgoDefaultPassword, mgoDefaultDatabase, mgoDefaultAuthDatabase, mgoDefaultTimeout, mgoMaxConn, mgoMaxIdle, mgoShardUser, mgoShardPassword, mgoDirect))
 	ret = append(ret, mongo.NewDBInfo(name, mgoAddrs, mgoDefaultUser,
-		mgoDefaultPassword, mgoDefaultDatabase, mgoDefaultAuthDatabase, mgoDefaultTimeout, mgoMaxConn, mgoMaxIdle, mgoShardUser, mgoShardPassword, mgoDirect))
+		mgoDefaultPassword, mgoDefaultAuthDatabase, mgoDefaultTimeout, mgoMaxConn, mgoDirect, mgoSecondary))
 	return
+}
+
+func (cfgs *Config) GetMgoDBName() (mgoDatabase string) {
+	mgoDatabase, _ = cfgs.StringOr("database.mgo.default.database", MGO_DATABASE)
+	return
+}
+
+func (cfgs *Config) GetJaegerConfig() *TracerOption {
+	host, _ := cfgs.StringOr("jaeger.host", JAEGER_HOST)
+	port, _ := cfgs.IntOr("jaeger.port", JAEGER_PORT)
+	sampleRate, _ := cfgs.FloatOr("jaeger.sample_rate", JAEGER_SAMPLE_RATE)
+	qSize, _ := cfgs.IntOr("jaeger.queue_size", JAEGER_QUEUE_SIZE)
+	buffer := cfgs.Duration("jaeger.flush_interval", JAEGER_FLUSH_INTERVAL)
+	return &TracerOption{Ip: host, Port: port, SampleRate: sampleRate, QueueSize: qSize, BufferFlushInterval: buffer}
 }
 
 // func (cfgs *Config) GetApiConfigs() (ret map[string]string) {
