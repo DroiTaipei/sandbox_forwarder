@@ -114,7 +114,7 @@ func globalMiddleware(h fasthttp.RequestHandler, timeout int) fasthttp.RequestHa
 		HTTPAccessLog(ctx, string(c.Method()), string(c.Path()), c.RemoteAddr().String(), c.Request.Header.ContentLength())
 
 		// Add trace
-		sp := trace.CreateSpanFromReqF(droictx.ComponentGoBuster, &c.Request, ctx)
+		sp := trace.CreateSpanFromReqF(droictx.ComponentForwarder, &c.Request, ctx)
 		defer sp.Finish()
 		ctx.Set(droitrace.ParentSpan, sp)
 
