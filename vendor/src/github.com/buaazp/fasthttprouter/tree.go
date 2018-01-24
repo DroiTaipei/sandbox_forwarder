@@ -5,6 +5,7 @@
 package fasthttprouter
 
 import (
+	"github.com/valyala/fasthttp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -47,7 +48,7 @@ type node struct {
 	maxParams uint8
 	indices   string
 	children  []*node
-	handle    Handle
+	handle    fasthttp.RequestHandler
 	priority  uint32
 }
 
@@ -79,7 +80,7 @@ func (n *node) incrementChildPrio(pos int) int {
 
 // addRoute adds a node with the given handle to the path.
 // Not concurrency-safe!
-func (n *node) addRoute(path string, handle Handle) {
+func (n *node) addRoute(path string, handle fasthttp.RequestHandler) {
 	fullPath := path
 	n.priority++
 	numParams := countParams(path)
@@ -144,16 +145,20 @@ func (n *node) addRoute(path string, handle Handle) {
 					numParams--
 
 					// Check if the wildcard matches
-					if len(path) >= len(n.path) && n.path == path[:len(n.path)] {
-						// check for longer wildcard, e.g. :name and :names
-						if len(n.path) >= len(path) || path[len(n.path)] == '/' {
-							continue walk
-						}
+					if len(path) >= len(n.path) && n.path == path[:len(n.path)] &&
+						// Check for longer wildcard, e.g. :name and :names
+						(len(n.path) >= len(path) || path[len(n.path)] == '/') {
+						continue walk
+					} else {
+						// Wildcard conflict
+						pathSeg := strings.SplitN(path, "/", 2)[0]
+						prefix := fullPath[:strings.Index(fullPath, pathSeg)] + n.path
+						panic("'" + pathSeg +
+							"' in new path '" + fullPath +
+							"' conflicts with existing wildcard '" + n.path +
+							"' in existing prefix '" + prefix +
+							"'")
 					}
-
-					panic("path segment '" + path +
-						"' conflicts with existing wildcard '" + n.path +
-						"' in path '" + fullPath + "'")
 				}
 
 				c := path[0]
@@ -202,7 +207,7 @@ func (n *node) addRoute(path string, handle Handle) {
 	}
 }
 
-func (n *node) insertChild(numParams uint8, path, fullPath string, handle Handle) {
+func (n *node) insertChild(numParams uint8, path, fullPath string, handle fasthttp.RequestHandler) {
 	var offset int // already handled bytes of the path
 
 	// find prefix until first wildcard (beginning with ':'' or '*'')
@@ -320,7 +325,7 @@ func (n *node) insertChild(numParams uint8, path, fullPath string, handle Handle
 // If no handle can be found, a TSR (trailing slash redirect) recommendation is
 // made if a handle exists with an extra (without the) trailing slash for the
 // given path.
-func (n *node) getValue(path string) (handle Handle, p Params, tsr bool) {
+func (n *node) getValue(path string, ctx *fasthttp.RequestCtx) (handle fasthttp.RequestHandler, tsr bool) {
 walk: // outer loop for walking the tree
 	for {
 		if len(path) > len(n.path) {
@@ -356,15 +361,10 @@ walk: // outer loop for walking the tree
 						end++
 					}
 
-					// save param value
-					if p == nil {
-						// lazy allocation
-						p = make(Params, 0, n.maxParams)
+					// handle calls to Router.allowed method with nil context
+					if ctx != nil {
+						ctx.SetUserValue(n.path[1:], path[:end])
 					}
-					i := len(p)
-					p = p[:i+1] // expand slice within preallocated capacity
-					p[i].Key = n.path[1:]
-					p[i].Value = path[:end]
 
 					// we need to go deeper!
 					if end < len(path) {
@@ -391,16 +391,10 @@ walk: // outer loop for walking the tree
 					return
 
 				case catchAll:
-					// save param value
-					if p == nil {
-						// lazy allocation
-						p = make(Params, 0, n.maxParams)
+					if ctx != nil {
+						// save param value
+						ctx.SetUserValue(n.path[2:], path)
 					}
-					i := len(p)
-					p = p[:i+1] // expand slice within preallocated capacity
-					p[i].Key = n.path[2:]
-					p[i].Value = path
-
 					handle = n.handle
 					return
 
@@ -447,7 +441,7 @@ walk: // outer loop for walking the tree
 // It can optionally also fix trailing slashes.
 // It returns the case-corrected path and a bool indicating whether the lookup
 // was successful.
-func (n *node) findCaseInsensitivePath(path string, fixTrailingSlash bool) (ciPath []byte, found bool) {
+func (n *node) findCaseInsensitivePath(path string, fixTrailingSlash bool) ([]byte, bool) {
 	return n.findCaseInsensitivePathRec(
 		path,
 		strings.ToLower(path),

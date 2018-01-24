@@ -23,7 +23,7 @@ const (
 type Route struct {
 	Method      string
 	Pattern     string
-	HandlerFunc fasthttprouter.Handle
+	HandlerFunc fasthttp.RequestHandler
 }
 type Routes []Route
 
@@ -33,36 +33,6 @@ var (
 			"GET",
 			"/health",
 			HealthCheckHandler,
-		},
-
-		Route{
-			"GET",
-			"/metrics/*url",
-			MetricsHandler,
-		},
-
-		Route{
-			"POST",
-			"/metrics/*url",
-			MetricsHandler,
-		},
-
-		Route{
-			"PUT",
-			"/metrics/*url",
-			MetricsHandler,
-		},
-
-		Route{
-			"PATCH",
-			"/metrics/*url",
-			MetricsHandler,
-		},
-
-		Route{
-			"DELETE",
-			"/metrics/*url",
-			MetricsHandler,
 		},
 	}
 
@@ -130,8 +100,8 @@ func logStackOnRecover(ctx *fasthttp.RequestCtx, r interface{}) {
 	return
 }
 
-func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handle {
-	return fasthttprouter.Handle(func(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+func globalMiddleware(h fasthttp.RequestHandler, timeout int) fasthttp.RequestHandler {
+	return func(c *fasthttp.RequestCtx) {
 		var v []byte
 		ctx := &droictx.DoneContext{}
 		for headerKey, fieldkey := range ur.KeyMap {
@@ -154,7 +124,7 @@ func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handl
 			defer close(doneCh)
 			defer recv(c)
 
-			h(c, ps)
+			h(c)
 		}()
 
 		select {
@@ -169,7 +139,7 @@ func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handl
 		}
 
 		return
-	})
+	}
 }
 
 func ApiRegist(timeout int) *fasthttprouter.Router {

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"strconv"
 
 	"github.com/valyala/fasthttp"
 )
@@ -42,5 +43,6 @@ func WriteError(c *fasthttp.RequestCtx, err error) {
 	resp := NewResponse()
 	resp.Message = err.Error()
 	resp.Code = getDroiErrorCode(err)
+	ErrorTotal.WithLabelValues(strconv.Itoa(resp.Code)).Inc()
 	resp.Write(c)
 }

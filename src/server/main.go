@@ -17,6 +17,7 @@ import (
 
 	jaeger "github.com/DroiTaipei/jaeger-client-go"
 	jaegercfg "github.com/DroiTaipei/jaeger-client-go/config"
+	fastprom "github.com/flf2ko/fasthttp-prometheus"
 	stdlog "log"
 )
 
@@ -103,7 +104,10 @@ func run(cfgFilePath string) (err error) {
 
 		stdlog.Println("API server start at port ", api_port)
 
-		err := fasthttp.ListenAndServe(bind_api, apiRouter.Handler)
+		p := fastprom.NewPrometheus("fasthttp")
+		fastpromHandler := p.WrapHandler(apiRouter)
+
+		err := fasthttp.ListenAndServe(bind_api, fastpromHandler)
 		if err != nil {
 			stdlog.Fatalf("API server crash with error %v", err.Error())
 		}

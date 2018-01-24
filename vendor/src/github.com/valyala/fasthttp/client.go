@@ -328,7 +328,7 @@ func (c *Client) DoTimeout(req *Request, resp *Response, timeout time.Duration) 
 // ErrNoFreeConns is returned if all Client.MaxConnsPerHost connections
 // to the requested host are busy.
 //
-/// It is recommended obtaining req and resp via AcquireRequest
+// It is recommended obtaining req and resp via AcquireRequest
 // and AcquireResponse in performance-critical code.
 func (c *Client) DoDeadline(req *Request, resp *Response, deadline time.Time) error {
 	return clientDoDeadline(req, resp, deadline, c)
@@ -460,6 +460,9 @@ type DialFunc func(addr string) (net.Conn, error)
 // HostClient balances http requests among hosts listed in Addr.
 //
 // HostClient may be used for balancing load among multiple upstream hosts.
+// While multiple addresses passed to HostClient.Addr may be used for balancing
+// load among them, it would be better using LBClient instead, since HostClient
+// may unevenly balance load among upstream hosts.
 //
 // It is forbidden copying HostClient instances. Create new instances instead.
 //
@@ -468,7 +471,7 @@ type HostClient struct {
 	noCopy noCopy
 
 	// Comma-separated list of upstream HTTP server host addresses,
-	// which are passed to Dial in round-robin manner.
+	// which are passed to Dial in a round-robin manner.
 	//
 	// Each address may contain port if default dialer is used.
 	// For example,
@@ -577,10 +580,15 @@ type HostClient struct {
 	addrs     []string
 	addrIdx   uint32
 
+	tlsConfigMap     map[string]*tls.Config
+	tlsConfigMapLock sync.Mutex
+
 	readerPool sync.Pool
 	writerPool sync.Pool
 
 	pendingRequests uint64
+
+	connsCleanerRun bool
 }
 
 type clientConn struct {
@@ -858,7 +866,7 @@ func ReleaseResponse(resp *Response) {
 // ErrNoFreeConns is returned if all HostClient.MaxConns connections
 // to the host are busy.
 //
-/// It is recommended obtaining req and resp via AcquireRequest
+// It is recommended obtaining req and resp via AcquireRequest
 // and AcquireResponse in performance-critical code.
 func (c *HostClient) DoTimeout(req *Request, resp *Response, timeout time.Duration) error {
 	return clientDoTimeout(req, resp, timeout, c)
@@ -959,15 +967,40 @@ var errorChPool sync.Pool
 // It is recommended obtaining req and resp via AcquireRequest
 // and AcquireResponse in performance-critical code.
 func (c *HostClient) Do(req *Request, resp *Response) error {
+	var err error
+	var retry bool
+	const maxAttempts = 5
+	attempts := 0
+
 	atomic.AddUint64(&c.pendingRequests, 1)
-	retry, err := c.do(req, resp)
-	if err != nil && retry && isIdempotent(req) {
-		_, err = c.do(req, resp)
+	for {
+		retry, err = c.do(req, resp)
+		if err == nil || !retry {
+			break
+		}
+
+		if !isIdempotent(req) {
+			// Retry non-idempotent requests if the server closes
+			// the connection before sending the response.
+			//
+			// This case is possible if the server closes the idle
+			// keep-alive connection on timeout.
+			//
+			// Apache and nginx usually do this.
+			if err != io.EOF {
+				break
+			}
+		}
+		attempts++
+		if attempts >= maxAttempts {
+			break
+		}
 	}
+	atomic.AddUint64(&c.pendingRequests, ^uint64(0))
+
 	if err == io.EOF {
 		err = ErrConnectionClosed
 	}
-	atomic.AddUint64(&c.pendingRequests, ^uint64(0))
 	return err
 }
 
@@ -1008,7 +1041,7 @@ func (c *HostClient) doNonNilReqResp(req *Request, resp *Response) (bool, error)
 		panic("BUG: resp cannot be nil")
 	}
 
-	atomic.StoreUint32(&c.lastUseTime, uint32(time.Now().Unix()-startTimeUnix))
+	atomic.StoreUint32(&c.lastUseTime, uint32(CoarseTimeNow().Unix()-startTimeUnix))
 
 	// Free up resources occupied by response before sending the request,
 	// so the GC may reclaim these resources (e.g. response body).
@@ -1024,7 +1057,7 @@ func (c *HostClient) doNonNilReqResp(req *Request, resp *Response) (bool, error)
 		// Optimization: update write deadline only if more than 25%
 		// of the last write deadline exceeded.
 		// See https://github.com/golang/go/issues/15133 for details.
-		currentTime := time.Now()
+		currentTime := CoarseTimeNow()
 		if currentTime.Sub(cc.lastWriteDeadlineTime) > (c.WriteTimeout >> 2) {
 			if err = conn.SetWriteDeadline(currentTime.Add(c.WriteTimeout)); err != nil {
 				c.closeConn(cc)
@@ -1068,7 +1101,7 @@ func (c *HostClient) doNonNilReqResp(req *Request, resp *Response) (bool, error)
 		// Optimization: update read deadline only if more than 25%
 		// of the last read deadline exceeded.
 		// See https://github.com/golang/go/issues/15133 for details.
-		currentTime := time.Now()
+		currentTime := CoarseTimeNow()
 		if currentTime.Sub(cc.lastReadDeadlineTime) > (c.ReadTimeout >> 2) {
 			if err = conn.SetReadDeadline(currentTime.Add(c.ReadTimeout)); err != nil {
 				c.closeConn(cc)
@@ -1089,10 +1122,7 @@ func (c *HostClient) doNonNilReqResp(req *Request, resp *Response) (bool, error)
 	if err = resp.ReadLimitBody(br, c.MaxResponseBodySize); err != nil {
 		c.releaseReader(br)
 		c.closeConn(cc)
-		if err == io.EOF {
-			return true, err
-		}
-		return false, err
+		return true, err
 	}
 	c.releaseReader(br)
 
@@ -1143,9 +1173,10 @@ func (c *HostClient) acquireConn() (*clientConn, error) {
 		if c.connsCount < maxConns {
 			c.connsCount++
 			createConn = true
-		}
-		if createConn && c.connsCount == 1 {
-			startCleaner = true
+			if !c.connsCleanerRun {
+				startCleaner = true
+				c.connsCleanerRun = true
+			}
 		}
 	} else {
 		n--
@@ -1162,6 +1193,10 @@ func (c *HostClient) acquireConn() (*clientConn, error) {
 		return nil, ErrNoFreeConns
 	}
 
+	if startCleaner {
+		go c.connsCleaner()
+	}
+
 	conn, err := c.dialHostHard()
 	if err != nil {
 		c.decConnsCount()
@@ -1169,16 +1204,12 @@ func (c *HostClient) acquireConn() (*clientConn, error) {
 	}
 	cc = acquireClientConn(conn)
 
-	if startCleaner {
-		go c.connsCleaner()
-	}
 	return cc, nil
 }
 
 func (c *HostClient) connsCleaner() {
 	var (
 		scratch             []*clientConn
-		mustStop            bool
 		maxIdleConnDuration = c.MaxIdleConnDuration
 	)
 	if maxIdleConnDuration <= 0 {
@@ -1187,6 +1218,7 @@ func (c *HostClient) connsCleaner() {
 	for {
 		currentTime := time.Now()
 
+		// Determine idle connections to be closed.
 		c.connsLock.Lock()
 		conns := c.conns
 		n := len(conns)
@@ -1194,7 +1226,6 @@ func (c *HostClient) connsCleaner() {
 		for i < n && currentTime.Sub(conns[i].lastUseTime) > maxIdleConnDuration {
 			i++
 		}
-		mustStop = (c.connsCount == i)
 		scratch = append(scratch[:0], conns[:i]...)
 		if i > 0 {
 			m := copy(conns, conns[i:])
@@ -1205,13 +1236,23 @@ func (c *HostClient) connsCleaner() {
 		}
 		c.connsLock.Unlock()
 
+		// Close idle connections.
 		for i, cc := range scratch {
 			c.closeConn(cc)
 			scratch[i] = nil
 		}
+
+		// Determine whether to stop the connsCleaner.
+		c.connsLock.Lock()
+		mustStop := c.connsCount == 0
+		if mustStop {
+			c.connsCleanerRun = false
+		}
+		c.connsLock.Unlock()
 		if mustStop {
 			break
 		}
+
 		time.Sleep(maxIdleConnDuration)
 	}
 }
@@ -1235,7 +1276,7 @@ func acquireClientConn(conn net.Conn) *clientConn {
 	}
 	cc := v.(*clientConn)
 	cc.c = conn
-	cc.createdTime = time.Now()
+	cc.createdTime = CoarseTimeNow()
 	return cc
 }
 
@@ -1247,7 +1288,7 @@ func releaseClientConn(cc *clientConn) {
 var clientConnPool sync.Pool
 
 func (c *HostClient) releaseConn(cc *clientConn) {
-	cc.lastUseTime = time.Now()
+	cc.lastUseTime = CoarseTimeNow()
 	c.connsLock.Lock()
 	c.conns = append(c.conns, cc)
 	c.connsLock.Unlock()
@@ -1289,11 +1330,64 @@ func (c *HostClient) releaseReader(br *bufio.Reader) {
 	c.readerPool.Put(br)
 }
 
-func newDefaultTLSConfig() *tls.Config {
-	return &tls.Config{
-		InsecureSkipVerify: true,
-		ClientSessionCache: tls.NewLRUClientSessionCache(0),
+func newClientTLSConfig(c *tls.Config, addr string) *tls.Config {
+	if c == nil {
+		c = &tls.Config{}
+	} else {
+		// TODO: substitute this with c.Clone() after go1.8 becomes mainstream :)
+		c = &tls.Config{
+			Rand:              c.Rand,
+			Time:              c.Time,
+			Certificates:      c.Certificates,
+			NameToCertificate: c.NameToCertificate,
+			GetCertificate:    c.GetCertificate,
+			RootCAs:           c.RootCAs,
+			NextProtos:        c.NextProtos,
+			ServerName:        c.ServerName,
+
+			// Do not copy ClientAuth, since it is server-related stuff
+			// Do not copy ClientCAs, since it is server-related stuff
+
+			InsecureSkipVerify: c.InsecureSkipVerify,
+			CipherSuites:       c.CipherSuites,
+
+			// Do not copy PreferServerCipherSuites - this is server stuff
+
+			SessionTicketsDisabled: c.SessionTicketsDisabled,
+
+			// Do not copy SessionTicketKey - this is server stuff
+
+			ClientSessionCache: c.ClientSessionCache,
+			MinVersion:         c.MinVersion,
+			MaxVersion:         c.MaxVersion,
+			CurvePreferences:   c.CurvePreferences,
+		}
 	}
+
+	if c.ClientSessionCache == nil {
+		c.ClientSessionCache = tls.NewLRUClientSessionCache(0)
+	}
+
+	if len(c.ServerName) == 0 {
+		serverName := tlsServerName(addr)
+		if serverName == "*" {
+			c.InsecureSkipVerify = true
+		} else {
+			c.ServerName = serverName
+		}
+	}
+	return c
+}
+
+func tlsServerName(addr string) string {
+	if !strings.Contains(addr, ":") {
+		return addr
+	}
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "*"
+	}
+	return host
 }
 
 func (c *HostClient) nextAddr() string {
@@ -1329,7 +1423,8 @@ func (c *HostClient) dialHostHard() (conn net.Conn, err error) {
 	deadline := time.Now().Add(timeout)
 	for n > 0 {
 		addr := c.nextAddr()
-		conn, err = dialAddr(addr, c.Dial, c.DialDualStack, c.IsTLS, c.TLSConfig)
+		tlsConfig := c.cachedTLSConfig(addr)
+		conn, err = dialAddr(addr, c.Dial, c.DialDualStack, c.IsTLS, tlsConfig)
 		if err == nil {
 			return conn, nil
 		}
@@ -1339,6 +1434,25 @@ func (c *HostClient) dialHostHard() (conn net.Conn, err error) {
 		n--
 	}
 	return nil, err
+}
+
+func (c *HostClient) cachedTLSConfig(addr string) *tls.Config {
+	if !c.IsTLS {
+		return nil
+	}
+
+	c.tlsConfigMapLock.Lock()
+	if c.tlsConfigMap == nil {
+		c.tlsConfigMap = make(map[string]*tls.Config)
+	}
+	cfg := c.tlsConfigMap[addr]
+	if cfg == nil {
+		cfg = newClientTLSConfig(c.TLSConfig, addr)
+		c.tlsConfigMap[addr] = cfg
+	}
+	c.tlsConfigMapLock.Unlock()
+
+	return cfg
 }
 
 func dialAddr(addr string, dial DialFunc, dialDualStack, isTLS bool, tlsConfig *tls.Config) (net.Conn, error) {
@@ -1358,9 +1472,6 @@ func dialAddr(addr string, dial DialFunc, dialDualStack, isTLS bool, tlsConfig *
 		panic("BUG: DialFunc returned (nil, nil)")
 	}
 	if isTLS {
-		if tlsConfig == nil {
-			tlsConfig = newDefaultTLSConfig()
-		}
 		conn = tls.Client(conn, tlsConfig)
 	}
 	return conn, nil
@@ -1507,6 +1618,9 @@ type pipelineConnClient struct {
 	chLock sync.Mutex
 	chW    chan *pipelineWork
 	chR    chan *pipelineWork
+
+	tlsConfigLock sync.Mutex
+	tlsConfig     *tls.Config
 }
 
 type pipelineWork struct {
@@ -1759,7 +1873,8 @@ func (c *pipelineConnClient) init() {
 }
 
 func (c *pipelineConnClient) worker() error {
-	conn, err := dialAddr(c.Addr, c.Dial, c.DialDualStack, c.IsTLS, c.TLSConfig)
+	tlsConfig := c.cachedTLSConfig()
+	conn, err := dialAddr(c.Addr, c.Dial, c.DialDualStack, c.IsTLS, tlsConfig)
 	if err != nil {
 		return err
 	}
@@ -1796,6 +1911,22 @@ func (c *pipelineConnClient) worker() error {
 	}
 
 	return err
+}
+
+func (c *pipelineConnClient) cachedTLSConfig() *tls.Config {
+	if !c.IsTLS {
+		return nil
+	}
+
+	c.tlsConfigLock.Lock()
+	cfg := c.tlsConfig
+	if cfg == nil {
+		cfg = newClientTLSConfig(c.TLSConfig, c.Addr)
+		c.tlsConfig = cfg
+	}
+	c.tlsConfigLock.Unlock()
+
+	return cfg
 }
 
 func (c *pipelineConnClient) writer(conn net.Conn, stopCh <-chan struct{}) error {
@@ -1860,7 +1991,7 @@ func (c *pipelineConnClient) writer(conn net.Conn, stopCh <-chan struct{}) error
 			// Optimization: update write deadline only if more than 25%
 			// of the last write deadline exceeded.
 			// See https://github.com/golang/go/issues/15133 for details.
-			currentTime := time.Now()
+			currentTime := CoarseTimeNow()
 			if currentTime.Sub(lastWriteDeadlineTime) > (writeTimeout >> 2) {
 				if err = conn.SetWriteDeadline(currentTime.Add(writeTimeout)); err != nil {
 					w.err = err
@@ -1941,7 +2072,7 @@ func (c *pipelineConnClient) reader(conn net.Conn, stopCh <-chan struct{}) error
 			// Optimization: update read deadline only if more than 25%
 			// of the last read deadline exceeded.
 			// See https://github.com/golang/go/issues/15133 for details.
-			currentTime := time.Now()
+			currentTime := CoarseTimeNow()
 			if currentTime.Sub(lastReadDeadlineTime) > (readTimeout >> 2) {
 				if err = conn.SetReadDeadline(currentTime.Add(readTimeout)); err != nil {
 					w.err = err

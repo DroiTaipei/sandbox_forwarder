@@ -13,38 +13,22 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/valyala/fasthttp"
 )
 
-func TestParams(t *testing.T) {
-	ps := Params{
-		Param{"param1", "value1"},
-		Param{"param2", "value2"},
-		Param{"param3", "value3"},
-	}
-	for i := range ps {
-		if val := ps.ByName(ps[i].Key); val != ps[i].Value {
-			t.Errorf("Wrong value for %s: Got %s; Want %s", ps[i].Key, val, ps[i].Value)
-		}
-	}
-	if val := ps.ByName("noKey"); val != "" {
-		t.Errorf("Expected empty string for not found key; got: %s", val)
-	}
-}
-
 func TestRouter(t *testing.T) {
 	router := New()
 
 	routed := false
-	router.Handle("GET", "/user/:name", func(ctx *fasthttp.RequestCtx, ps Params) {
+	router.Handle("GET", "/user/:name", func(ctx *fasthttp.RequestCtx) {
 		routed = true
-		want := Params{Param{"name", "gopher"}}
-		if !reflect.DeepEqual(ps, want) {
-			t.Fatalf("wrong wildcard values: want %v, got %v", want, ps)
+		want := map[string]string{"name": "gopher"}
+
+		if ctx.UserValue("name") != want["name"] {
+			t.Fatalf("wrong wildcard values: want %v, got %v", want["name"], ctx.UserValue("name"))
 		}
 		ctx.Success("foo/bar", []byte("success"))
 	})
@@ -87,25 +71,25 @@ func TestRouterAPI(t *testing.T) {
 	var get, head, options, post, put, patch, deleted bool
 
 	router := New()
-	router.GET("/GET", func(ctx *fasthttp.RequestCtx, _ Params) {
+	router.GET("/GET", func(ctx *fasthttp.RequestCtx) {
 		get = true
 	})
-	router.HEAD("/GET", func(ctx *fasthttp.RequestCtx, _ Params) {
+	router.HEAD("/GET", func(ctx *fasthttp.RequestCtx) {
 		head = true
 	})
-	router.OPTIONS("/GET", func(ctx *fasthttp.RequestCtx, _ Params) {
+	router.OPTIONS("/GET", func(ctx *fasthttp.RequestCtx) {
 		options = true
 	})
-	router.POST("/POST", func(ctx *fasthttp.RequestCtx, _ Params) {
+	router.POST("/POST", func(ctx *fasthttp.RequestCtx) {
 		post = true
 	})
-	router.PUT("/PUT", func(ctx *fasthttp.RequestCtx, _ Params) {
+	router.PUT("/PUT", func(ctx *fasthttp.RequestCtx) {
 		put = true
 	})
-	router.PATCH("/PATCH", func(ctx *fasthttp.RequestCtx, _ Params) {
+	router.PATCH("/PATCH", func(ctx *fasthttp.RequestCtx) {
 		patch = true
 	})
-	router.DELETE("/DELETE", func(ctx *fasthttp.RequestCtx, _ Params) {
+	router.DELETE("/DELETE", func(ctx *fasthttp.RequestCtx) {
 		deleted = true
 	})
 
@@ -245,13 +229,13 @@ func TestRouterChaining(t *testing.T) {
 	router1.NotFound = router2.Handler
 
 	fooHit := false
-	router1.POST("/foo", func(ctx *fasthttp.RequestCtx, _ Params) {
+	router1.POST("/foo", func(ctx *fasthttp.RequestCtx) {
 		fooHit = true
 		ctx.SetStatusCode(fasthttp.StatusOK)
 	})
 
 	barHit := false
-	router2.POST("/bar", func(ctx *fasthttp.RequestCtx, _ Params) {
+	router2.POST("/bar", func(ctx *fasthttp.RequestCtx) {
 		barHit = true
 		ctx.SetStatusCode(fasthttp.StatusOK)
 	})
@@ -329,7 +313,7 @@ func TestRouterChaining(t *testing.T) {
 func TestRouterOPTIONS(t *testing.T) {
 	// TODO: because fasthttp is not support OPTIONS method now,
 	// these test cases will be used in the future.
-	handlerFunc := func(_ *fasthttp.RequestCtx, _ Params) {}
+	handlerFunc := func(_ *fasthttp.RequestCtx) {}
 
 	router := New()
 	router.POST("/path", handlerFunc)
@@ -462,7 +446,7 @@ func TestRouterOPTIONS(t *testing.T) {
 
 	// custom handler
 	var custom bool
-	router.OPTIONS("/path", func(_ *fasthttp.RequestCtx, _ Params) {
+	router.OPTIONS("/path", func(_ *fasthttp.RequestCtx) {
 		custom = true
 	})
 
@@ -519,7 +503,7 @@ func TestRouterOPTIONS(t *testing.T) {
 }
 
 func TestRouterNotAllowed(t *testing.T) {
-	handlerFunc := func(_ *fasthttp.RequestCtx, _ Params) {}
+	handlerFunc := func(_ *fasthttp.RequestCtx) {}
 
 	router := New()
 	router.POST("/path", handlerFunc)
@@ -550,7 +534,7 @@ func TestRouterNotAllowed(t *testing.T) {
 		t.Fatalf("Unexpected error when reading response: %s", err)
 	}
 	if !(resp.Header.StatusCode() == fasthttp.StatusMethodNotAllowed) {
-		t.Errorf("NotAllowed handling failed: Code=%d, Header=%v", resp.Header.StatusCode(), resp.Header)
+		t.Errorf("NotAllowed handling failed: Code=%d", resp.Header.StatusCode())
 	} else if allow := string(resp.Header.Peek("Allow")); allow != "POST, OPTIONS" {
 		t.Error("unexpected Allow header value: " + allow)
 	}
@@ -576,7 +560,7 @@ func TestRouterNotAllowed(t *testing.T) {
 		t.Fatalf("Unexpected error when reading response: %s", err)
 	}
 	if !(resp.Header.StatusCode() == fasthttp.StatusMethodNotAllowed) {
-		t.Errorf("NotAllowed handling failed: Code=%d, Header=%v", resp.Header.StatusCode(), resp.Header)
+		t.Errorf("NotAllowed handling failed: Code=%d", resp.Header.StatusCode())
 	} else if allow := string(resp.Header.Peek("Allow")); allow != "POST, DELETE, OPTIONS" && allow != "DELETE, POST, OPTIONS" {
 		t.Error("unexpected Allow header value: " + allow)
 	}
@@ -613,7 +597,7 @@ func TestRouterNotAllowed(t *testing.T) {
 }
 
 func TestRouterNotFound(t *testing.T) {
-	handlerFunc := func(_ *fasthttp.RequestCtx, _ Params) {}
+	handlerFunc := func(_ *fasthttp.RequestCtx) {}
 
 	router := New()
 	router.GET("/path", handlerFunc)
@@ -624,15 +608,17 @@ func TestRouterNotFound(t *testing.T) {
 		route string
 		code  int
 	}{
-		{"/path/", 301},   // TSR -/
-		{"/dir", 301},     // TSR +/
-		{"/", 200},        // TSR +/
-		{"/PATH", 301},    // Fixed Case
-		{"/DIR", 301},     // Fixed Case
-		{"/PATH/", 301},   // Fixed Case -/
-		{"/DIR/", 301},    // Fixed Case +/
-		{"/../path", 200}, // CleanPath
-		{"/nope", 404},    // NotFound
+		{"/path/", 301},          // TSR -/
+		{"/dir", 301},            // TSR +/
+		{"/", 200},               // TSR +/
+		{"/PATH", 301},           // Fixed Case
+		{"/DIR", 301},            // Fixed Case
+		{"/PATH/", 301},          // Fixed Case -/
+		{"/DIR/", 301},           // Fixed Case +/
+		{"/paTh/?name=foo", 301}, // Fixed Case With Params +/
+		{"/paTh?name=foo", 301},  // Fixed Case With Params +/
+		{"/../path", 200},        // CleanPath
+		{"/nope", 404},           // NotFound
 	}
 
 	s := &fasthttp.Server{
@@ -743,7 +729,7 @@ func TestRouterPanicHandler(t *testing.T) {
 		panicHandled = true
 	}
 
-	router.Handle("PUT", "/user/:name", func(_ *fasthttp.RequestCtx, _ Params) {
+	router.Handle("PUT", "/user/:name", func(_ *fasthttp.RequestCtx) {
 		panic("oops!")
 	})
 
@@ -780,15 +766,15 @@ func TestRouterPanicHandler(t *testing.T) {
 
 func TestRouterLookup(t *testing.T) {
 	routed := false
-	wantHandle := func(_ *fasthttp.RequestCtx, _ Params) {
+	wantHandle := func(_ *fasthttp.RequestCtx) {
 		routed = true
 	}
-	wantParams := Params{Param{"name", "gopher"}}
 
 	router := New()
+	ctx := &fasthttp.RequestCtx{}
 
 	// try empty router first
-	handle, _, tsr := router.Lookup("GET", "/nope")
+	handle, tsr := router.Lookup("GET", "/nope", ctx)
 	if handle != nil {
 		t.Fatalf("Got handle for unregistered pattern: %v", handle)
 	}
@@ -799,21 +785,20 @@ func TestRouterLookup(t *testing.T) {
 	// insert route and try again
 	router.GET("/user/:name", wantHandle)
 
-	handle, params, tsr := router.Lookup("GET", "/user/gopher")
+	handle, tsr = router.Lookup("GET", "/user/gopher", ctx)
 	if handle == nil {
 		t.Fatal("Got no handle!")
 	} else {
-		handle(nil, nil)
+		handle(nil)
 		if !routed {
 			t.Fatal("Routing failed!")
 		}
 	}
-
-	if !reflect.DeepEqual(params, wantParams) {
-		t.Fatalf("Wrong parameter values: want %v, got %v", wantParams, params)
+	if ctx.UserValue("name") != "gopher" {
+		t.Error("Param not set!")
 	}
 
-	handle, _, tsr = router.Lookup("GET", "/user/gopher/")
+	handle, tsr = router.Lookup("GET", "/user/gopher/", ctx)
 	if handle != nil {
 		t.Fatalf("Got handle for unregistered pattern: %v", handle)
 	}
@@ -821,7 +806,7 @@ func TestRouterLookup(t *testing.T) {
 		t.Error("Got no TSR recommendation!")
 	}
 
-	handle, _, tsr = router.Lookup("GET", "/nope")
+	handle, tsr = router.Lookup("GET", "/nope", ctx)
 	if handle != nil {
 		t.Fatalf("Got handle for unregistered pattern: %v", handle)
 	}

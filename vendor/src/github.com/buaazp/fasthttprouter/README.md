@@ -1,18 +1,30 @@
 # FastHttpRouter
-[![Build Status](https://travis-ci.org/buaazp/fasthttprouter.png?branch=master)](https://travis-ci.org/buaazp/fasthttprouter)
+[![Build Status](https://travis-ci.org/buaazp/fasthttprouter.svg?branch=master)](https://travis-ci.org/buaazp/fasthttprouter)
 [![Coverage Status](https://coveralls.io/repos/buaazp/fasthttprouter/badge.svg?branch=master&service=github)](https://coveralls.io/github/buaazp/fasthttprouter?branch=master)
-[![GoDoc](http://godoc.org/github.com/buaazp/fasthttprouter?status.png)](http://godoc.org/github.com/buaazp/fasthttprouter)
+[![Go Report Card](https://goreportcard.com/badge/github.com/buaazp/fasthttprouter)](https://goreportcard.com/report/github.com/buaazp/fasthttprouter)
+[![GoDoc](http://godoc.org/github.com/buaazp/fasthttprouter?status.svg)](http://godoc.org/github.com/buaazp/fasthttprouter)
+[![GitHub release](https://img.shields.io/github/release/buaazp/fasthttprouter.svg)](https://github.com/buaazp/fasthttprouter/releases)
 
 FastHttpRouter is forked from [httprouter](https://github.com/julienschmidt/httprouter) which is a lightweight high performance HTTP request router
 (also called *multiplexer* or just *mux* for short) for [fasthttp](https://github.com/valyala/fasthttp).
 
-In contrast to the [RequestHandler](https://godoc.org/github.com/valyala/fasthttp#RequestHandler) functions of valyala's `fasthttp` package, this router supports variables in the routing pattern and matches against the request method. It also scales better.
+This router is optimized for high performance and a small memory footprint. It scales well even with very long paths and a large number of routes. A compressing dynamic trie (radix tree) structure is used for efficient matching.
 
-The router is optimized for high performance and a small memory footprint. It scales well even with very long paths and a large number of routes. A compressing dynamic trie (radix tree) structure is used for efficient matching.
+#### License Related
+
+- The author of `httprouter` [@julienschmidt](https://github.com/julienschmidt) did almost all the hard work of this router.
+- I respect the laws of open source. So LICENSE of `httprouter` is alway stay here: [HttpRouterLicense](HttpRouterLicense).
+- What I do is just fit for `fasthttp`. I have no hope to build a huge but toxic go web framwork like [iris](https://github.com/kataras/iris). 
+- I fork this repo is just because there is no router for `fasthttp` at that time. And `fasthttprouter` is the FIRST router for `fasthttp`. 
+- `fasthttprouter` has been used in my online production and processes 17 million requests per day. It is fast and stable, so I decide to release a stable version.
+
+#### Releases
+
+- [2016.10.24] [v0.1.0](https://github.com/buaazp/fasthttprouter/releases/tag/v0.1.0) The first release version of `fasthttprouter`.
 
 ## Features
 
-**Best Performance:** FastHttpRouter is the **fastest** go web framework in the [go-web-framework-benchmark](https://github.com/smallnest/go-web-framework-benchmark). Even faster than httprouter itself.
+**Best Performance:** FastHttpRouter is **one of the fastest** go web frameworks in the [go-web-framework-benchmark](https://github.com/smallnest/go-web-framework-benchmark). Even faster than httprouter itself.
 
 - Basic Test: The first test case is to mock 0 ms, 10 ms, 100 ms, 500 ms processing time in handlers. The concurrency clients are 5000.
 
@@ -64,7 +76,7 @@ Of course you can also set **custom [NotFound](http://godoc.org/github.com/buaaz
 
 ## Usage
 
-This is just a quick introduction, view the [GoDoc](http://godoc.org/github.com/buaazp/fasthttprouter) for details.
+This is just a quick introduction, view the [GoDoc](http://godoc.org/github.com/buaazp/fasthttprouter) for details:
 
 Let's start with a trivial example:
 
@@ -79,12 +91,12 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func Index(ctx *fasthttp.RequestCtx, _ fasthttprouter.Params) {
+func Index(ctx *fasthttp.RequestCtx) {
 	fmt.Fprint(ctx, "Welcome!\n")
 }
 
-func Hello(ctx *fasthttp.RequestCtx, ps fasthttprouter.Params) {
-	fmt.Fprintf(ctx, "hello, %s!\n", ps.ByName("name"))
+func Hello(ctx *fasthttp.RequestCtx) {
+	fmt.Fprintf(ctx, "hello, %s!\n", ctx.UserValue("name"))
 }
 
 func main() {
@@ -98,7 +110,7 @@ func main() {
 
 ### Named parameters
 
-As you can see, `:name` is a *named parameter*. The values are accessible via `httprouter.Params`, which is just a slice of `httprouter.Param`s. You can get the value of a parameter either by its index in the slice, or by using the `ByName(name)` method: `:name` can be retrived by `ByName("name")`.
+As you can see, `:name` is a *named parameter*. The values are accessible via `RequestCtx.UserValues`. You can get the value of a parameter by using the `ctx.UserValue("name")`.
 
 Named parameters only match a single path segment:
 
@@ -174,112 +186,12 @@ Just try it out for yourself, the usage of FastHttpRouter is very straightforwar
 
 ## Where can I find Middleware *X*?
 
-This package just provides a very efficient request router with a few extra features. The router is just a [`http.Handler`][http.Handler], you can chain any http.Handler compatible middleware before the router, for example the [Gorilla handlers](http://www.gorillatoolkit.org/pkg/handlers). Or you could [just write your own](https://justinas.org/writing-http-middleware-in-go/), it's very easy!
+This package just provides a very efficient request router with a few extra features. The router is just a [`fasthttp.RequestHandler`](https://godoc.org/github.com/valyala/fasthttp#RequestHandler), you can chain any `fasthttp.RequestHandler` compatible middleware before the router. Or you could [just write your own](https://justinas.org/writing-http-middleware-in-go/), it's very easy!
 
-Alternatively, you could try [a web framework based on HttpRouter](#web-frameworks-based-on-httprouter).
+Have a look at these midware examples:
 
-### Multi-domain / Sub-domains
-
-Here is a quick example: Does your server serve multiple domains / hosts?
-You want to use sub-domains?
-Define a router per host!
-
-```go
-// We need an object that implements the fasthttp.RequestHandler interface.
-// We just use a map here, in which we map host names (with port) to fasthttp.RequestHandlers
-type HostSwitch map[string]fasthttp.RequestHandler
-
-// Implement a CheckHost method on our new type
-func (hs HostSwitch) CheckHost(ctx *fasthttp.RequestCtx) {
-	// Check if a http.Handler is registered for the given host.
-	// If yes, use it to handle the request.
-	if handler := hs[string(ctx.Host())]; handler != nil {
-		handler(ctx)
-	} else {
-		// Handle host names for wich no handler is registered
-		ctx.Error("Forbidden", 403) // Or Redirect?
-	}
-}
-
-func main() {
-	// Initialize a router as usual
-	router := fasthttprouter.New()
-	router.GET("/", Index)
-	router.GET("/hello/:name", Hello)
-
-	// Make a new HostSwitch and insert the router (our http handler)
-	// for example.com and port 12345
-	hs := make(HostSwitch)
-	hs["example.com:12345"] = router.Handler
-
-	// Use the HostSwitch to listen and serve on port 12345
-	log.Fatal(fasthttp.ListenAndServe(":12345", hs.CheckHost))
-}
-```
-
-### Basic Authentication
-
-Another quick example: Basic Authentication (RFC 2617) for handles:
-
-```go
-package main
-
-import (
-	"bytes"
-	"encoding/base64"
-	"fmt"
-	"log"
-
-	"github.com/buaazp/fasthttprouter"
-	"github.com/valyala/fasthttp"
-)
-
-var basicAuthPrefix = []byte("Basic ")
-
-func BasicAuth(h fasthttprouter.Handle, user, pass []byte) fasthttprouter.Handle {
-	return fasthttprouter.Handle(func(ctx *fasthttp.RequestCtx, ps fasthttprouter.Params) {
-		// Get the Basic Authentication credentials
-		auth := ctx.Request.Header.Peek("Authorization")
-		if bytes.HasPrefix(auth, basicAuthPrefix) {
-			// Check credentials
-			payload, err := base64.StdEncoding.DecodeString(string(auth[len(basicAuthPrefix):]))
-			if err == nil {
-				pair := bytes.SplitN(payload, []byte(":"), 2)
-				if len(pair) == 2 &&
-					bytes.Equal(pair[0], user) &&
-					bytes.Equal(pair[1], pass) {
-					// Delegate request to the given handle
-					h(ctx, ps)
-					return
-				}
-			}
-		}
-
-		// Request Basic Authentication otherwise
-		ctx.Response.Header.Set("WWW-Authenticate", "Basic realm=Restricted")
-		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusUnauthorized), fasthttp.StatusUnauthorized)
-	})
-}
-
-func Index(ctx *fasthttp.RequestCtx, _ fasthttprouter.Params) {
-	fmt.Fprint(ctx, "Not protected!\n")
-}
-
-func Protected(ctx *fasthttp.RequestCtx, _ fasthttprouter.Params) {
-	fmt.Fprint(ctx, "Protected!\n")
-}
-
-func main() {
-	user := []byte("gordon")
-	pass := []byte("secret!")
-
-	router := fasthttprouter.New()
-	router.GET("/", Index)
-	router.GET("/protected/", BasicAuth(Protected, user, pass))
-
-	log.Fatal(fasthttp.ListenAndServe(":8080", router.Handler))
-}
-```
+- [Auth Midware](examples/auth)
+- [Multi Hosts Midware](examples/hosts)
 
 ## Chaining with the NotFound handler
 

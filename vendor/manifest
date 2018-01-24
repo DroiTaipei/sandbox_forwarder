@@ -110,7 +110,7 @@
 		{
 			"importpath": "github.com/buaazp/fasthttprouter",
 			"repository": "https://github.com/buaazp/fasthttprouter",
-			"revision": "0729217d031ab353a3e34b94e8544e167f7ce9a4",
+			"revision": "29a27c70315770a2344e11847de85648512717e7",
 			"branch": "master"
 		},
 		{
@@ -185,6 +185,12 @@
 			"importpath": "github.com/elodina/siesta-producer",
 			"repository": "https://github.com/elodina/siesta-producer",
 			"revision": "a374fc36c515243efb438aed41c536af55d8b19b",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/flf2ko/fasthttp-prometheus",
+			"repository": "https://github.com/flf2ko/fasthttp-prometheus",
+			"revision": "755378ae169c8233c1819e678a04ef1f7ccc036d",
 			"branch": "master"
 		},
 		{
@@ -460,7 +466,7 @@
 		{
 			"importpath": "github.com/valyala/fasthttp",
 			"repository": "https://github.com/valyala/fasthttp",
-			"revision": "b43280dfe8ade44056e0179593f8ab30f82a7f47",
+			"revision": "e5f51c11919d4f66400334047b897ef0a94c6f3c",
 			"branch": "master"
 		},
 		{
