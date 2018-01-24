@@ -96,6 +96,7 @@ func run(cfgFilePath string) (err error) {
 	api_port, forwarder_port := cfg.GetAPIPort()
 	timeout := cfg.GetTimeout()
 
+	// Register route
 	apiRouter := api.ApiRegist(timeout)
 	forwarderRouter := api.ForwarderRegist(timeout)
 
@@ -106,6 +107,7 @@ func run(cfgFilePath string) (err error) {
 
 		p := fastprom.NewPrometheus("fasthttp")
 		fastpromHandler := p.WrapHandler(apiRouter)
+		api.RegistForwardMetrics()
 
 		err := fasthttp.ListenAndServe(bind_api, fastpromHandler)
 		if err != nil {
