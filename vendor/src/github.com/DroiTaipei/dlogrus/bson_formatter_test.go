@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/DroiTaipei/mgo/bson"
-	"github.com/devopstaku/logrus"
+	"github.com/DroiTaipei/logrus"
 )
 
 func TestAccessLogUnserialize(t *testing.T) {

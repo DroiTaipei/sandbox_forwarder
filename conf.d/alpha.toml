@@ -5,7 +5,7 @@
 
 [log]
   # Discard means not write log to local file
-  file_name = "debug.log"
+  file_name = "Discard"
   level = "debug"
   standard_log_version = "1"
   access_log_version = "1"
@@ -30,13 +30,19 @@
   # Unit is Millisecond
   enqueue_timeout = 1000
 
+[jaeger]
+  host = "10.128.112.10"
+  port = 32103
+  sample_rate = 1
+  queue_size = 128
+  flush_interval = "60s"
+
 [database]
 [database.mgo.default]
   name = "Mgo"
   user = "geoman"
   password = "wM7DJRQN81WxX4zD"
   authdatabase = "admin"
-  database = "zone"
   max_conn = 10
   max_idle = 15
   host_num = 2

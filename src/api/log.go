@@ -9,7 +9,8 @@ const (
 	METHOD_FIELD   = "Md"
 	URI_FIELD      = "Uri"
 	CLIENT_ADDRESS = "CI"
-	REQEUST_LENGTH = "Rl"
+	REQUEST_LENGTH = "Rl"
+	REQUEST_ID     = "Rid"
 )
 
 func errorLog(err error) {
@@ -25,7 +26,7 @@ func HTTPAccessLog(ctx droictx.Context, method, uri, addr string, length int) {
 		WithField(METHOD_FIELD, method).
 		WithField(URI_FIELD, uri).
 		WithField(CLIENT_ADDRESS, addr).
-		WithField(REQEUST_LENGTH, length).
+		WithField(REQUEST_LENGTH, length).
 		Info("HTTP Access")
 }
 

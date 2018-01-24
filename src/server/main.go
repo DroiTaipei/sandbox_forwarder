@@ -4,16 +4,21 @@ import (
 	"api"
 	"flag"
 	"fmt"
-
-	"github.com/DroiTaipei/dlogrus"
-	"github.com/DroiTaipei/droipkg"
-	"github.com/DroiTaipei/mongo"
-	"github.com/valyala/fasthttp"
-	// "github.com/valyala/fasthttp/reuseport"
-	stdlog "log"
 	"os"
 	"runtime"
 	"util/config"
+
+	"github.com/DroiTaipei/dlogrus"
+	"github.com/DroiTaipei/droictx"
+	"github.com/DroiTaipei/droipkg"
+	"github.com/DroiTaipei/droitrace"
+	"github.com/DroiTaipei/mongo"
+	"github.com/valyala/fasthttp"
+
+	jaeger "github.com/DroiTaipei/jaeger-client-go"
+	jaegercfg "github.com/DroiTaipei/jaeger-client-go/config"
+	fastprom "github.com/flf2ko/fasthttp-prometheus"
+	stdlog "log"
 )
 
 type options struct {
@@ -73,7 +78,7 @@ func run(cfgFilePath string) (err error) {
 		stdlog.Println("Kafka Connected")
 	}
 
-	err = mongo.Initialize(cfg.GetMgoDBInfo(), "_Id", dlogrus.StandardLogger())
+	err = mongo.Initialize(cfg.GetMgoDBInfo())
 	if err != nil {
 		return droipkg.Wrap(err, "Mongo initailize failed")
 	}
@@ -82,9 +87,16 @@ func run(cfgFilePath string) (err error) {
 
 	droipkg.SetLogger(dlogrus.StandardLogger())
 
+	initTracer(cfg.GetJaegerConfig())
+	if err != nil {
+		panic(err)
+	}
+	stdlog.Println("[Jaeger] Init Jaeger successfully")
+
 	api_port, forwarder_port := cfg.GetAPIPort()
 	timeout := cfg.GetTimeout()
 
+	// Register route
 	apiRouter := api.ApiRegist(timeout)
 	forwarderRouter := api.ForwarderRegist(timeout)
 
@@ -93,7 +105,11 @@ func run(cfgFilePath string) (err error) {
 
 		stdlog.Println("API server start at port ", api_port)
 
-		err := fasthttp.ListenAndServe(bind_api, apiRouter.Handler)
+		p := fastprom.NewPrometheus("fasthttp")
+		fastpromHandler := p.WrapHandler(apiRouter)
+		api.RegistForwardMetrics()
+
+		err := fasthttp.ListenAndServe(bind_api, fastpromHandler)
 		if err != nil {
 			stdlog.Fatalf("API server crash with error %v", err.Error())
 		}
@@ -101,6 +117,27 @@ func run(cfgFilePath string) (err error) {
 
 	bind_forwarder := fmt.Sprintf(":%d", forwarder_port)
 	fasthttp.ListenAndServe(bind_forwarder, forwarderRouter.Handler)
+
+	return nil
+}
+
+func initTracer(opt *config.TracerOption) error {
+
+	componentName := fmt.Sprintf("%s.%s", droictx.ComponentForwarder, version)
+
+	sConf := &jaegercfg.SamplerConfig{
+		Type:  jaeger.SamplerTypeRateLimiting,
+		Param: opt.SampleRate,
+	}
+	rConf := &jaegercfg.ReporterConfig{
+		QueueSize:           opt.QueueSize,
+		BufferFlushInterval: opt.BufferFlushInterval,
+		LocalAgentHostPort:  fmt.Sprintf("%s:%d", opt.Ip, opt.Port),
+	}
+
+	if err := droitrace.InitJaeger(componentName, sConf, rConf); err != nil {
+		return fmt.Errorf("Init tracer error:%s", err.Error())
+	}
 
 	return nil
 }

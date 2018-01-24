@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/DroiTaipei/droipkg"
-	"github.com/devopstaku/logrus"
+	"github.com/DroiTaipei/logrus"
 )
 
 const (
@@ -19,6 +19,10 @@ const (
 	POD_NAME_FIELD               = "Pd"
 	NODE_NAME_FIELD              = "Nd"
 	DISCARD_FILE_NAME            = "Discard"
+	OS_STDOUT                    = "os.Stdout"
+	TEXT_FORMATTER_CODE          = "text"
+	JSON_FORMATTER_CODE          = "json"
+	BSON_FORMATTER_CODE          = "bson"
 	STANDARD_LOG_VERSION_DEFAULT = "1"
 	ACCESS_LOG_VERSION_DEFAULT   = "1"
 )
@@ -27,6 +31,7 @@ type Fields logrus.Fields
 
 var settings map[string]string
 var logFd *os.File
+var logger *logrus.Logger
 var hook *kafkaHook
 
 func init() {
@@ -35,35 +40,42 @@ func init() {
 	logrus.SetOutput(os.Stdout)
 	// Only log the warning severity or above.
 	logrus.SetLevel(logrus.DebugLevel)
+	logger = logrus.StandardLogger()
 }
 
 func setOutput(fileName string) (err error) {
-	if fileName == DISCARD_FILE_NAME {
-		logrus.SetOutput(ioutil.Discard)
-		return
+
+	switch fileName {
+	case DISCARD_FILE_NAME:
+		logger.Out = ioutil.Discard
+	case OS_STDOUT:
+		logger.Out = os.Stdout
+	default:
+		logFd, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			return err
+		}
+		logger.Out = logFd
 	}
-	logFd, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	logrus.SetOutput(logFd)
 	return
 }
 
 func setLevel(lvl string) (err error) {
 	level, err := logrus.ParseLevel(lvl)
 	if err == nil {
-		logrus.SetLevel(level)
+		logger.Level = level
 	}
 	return
 }
 
 func setFormatter(formatterName string) (err error) {
 	switch formatterName {
-	case "json":
-		logrus.SetFormatter(newJSONFormatter(""))
-	case "bson":
-		logrus.SetFormatter(newBSONFormatter(""))
+	case JSON_FORMATTER_CODE:
+		logger.Formatter = newJSONFormatter("")
+	case BSON_FORMATTER_CODE:
+		logger.Formatter = newBSONFormatter("")
+	case TEXT_FORMATTER_CODE:
+		logger.Formatter = new(logrus.TextFormatter)
 	default:
 		err = errors.New("There is no valid formatter")
 	}
@@ -117,7 +129,23 @@ func Initialize(fileName, level, formatter, stdLogVer, accessLogVer string) (err
 }
 
 func StandardLogger() *droipkg.DroiLogger {
-	return &droipkg.DroiLogger{logrus.StandardLogger()}
+	return &droipkg.DroiLogger{logger}
+}
+
+// Sugar Setting
+func SetDevelopMode() (err error) {
+	err = setFormatter(TEXT_FORMATTER_CODE)
+	if err != nil {
+		return
+	}
+	// Output to stderr instead of stdout, could also be a file.
+	err = setOutput(OS_STDOUT)
+	if err != nil {
+		return
+	}
+	err = setLevel("debug")
+	logger.Hooks = make(logrus.LevelHooks)
+	return
 }
 
 func Close() {
@@ -130,41 +158,41 @@ func Close() {
 }
 
 func Debug(args ...interface{}) {
-	logrus.Debug(args...)
+	logger.Debug(args...)
 }
 
 func Info(args ...interface{}) {
-	logrus.Info(args...)
+	logger.Info(args...)
 }
 
 func Warn(args ...interface{}) {
-	logrus.Warn(args...)
+	logger.Warn(args...)
 }
 
 func Error(args ...interface{}) {
-	logrus.Error(args...)
+	logger.Error(args...)
 }
 
 func Fatal(args ...interface{}) {
-	logrus.Fatal(args...)
+	logger.Fatal(args...)
 }
 
 func WithFieldsDebug(fields Fields, msg string) {
-	logrus.WithFields(logrus.Fields(fields)).Debug(msg)
+	logger.WithFields(logrus.Fields(fields)).Debug(msg)
 }
 
 func WithFieldsInfo(fields Fields, msg string) {
-	logrus.WithFields(logrus.Fields(fields)).Info(msg)
+	logger.WithFields(logrus.Fields(fields)).Info(msg)
 }
 
 func WithFieldsWarn(fields Fields, msg string) {
-	logrus.WithFields(logrus.Fields(fields)).Warn(msg)
+	logger.WithFields(logrus.Fields(fields)).Warn(msg)
 }
 
 func WithFieldsError(fields Fields, msg string) {
-	logrus.WithFields(logrus.Fields(fields)).Error(msg)
+	logger.WithFields(logrus.Fields(fields)).Error(msg)
 }
 
 func WithFieldsFatal(fields Fields, msg string) {
-	logrus.WithFields(logrus.Fields(fields)).Fatal(msg)
+	logger.WithFields(logrus.Fields(fields)).Fatal(msg)
 }

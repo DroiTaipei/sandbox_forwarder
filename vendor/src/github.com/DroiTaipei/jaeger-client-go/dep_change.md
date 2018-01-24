@@ -1,0 +1,3 @@
+- `github.com/uber/jaeger-client-go` ->  `github.com/DroiTaipei/jaeger-client-go` 
+- `github.com/opentracing/opentracing-go` -> `github.com/DroiTaipei/opentracing-go`
+- `github.com/apache/thrift` -> `github.com/DroiTaipei/thrift`

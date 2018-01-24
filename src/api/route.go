@@ -7,8 +7,10 @@ import (
 	"time"
 
 	ur "util/request"
+	"util/trace"
 
 	"github.com/DroiTaipei/droictx"
+	"github.com/DroiTaipei/droitrace"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 )
@@ -21,7 +23,7 @@ const (
 type Route struct {
 	Method      string
 	Pattern     string
-	HandlerFunc fasthttprouter.Handle
+	HandlerFunc fasthttp.RequestHandler
 }
 type Routes []Route
 
@@ -31,36 +33,6 @@ var (
 			"GET",
 			"/health",
 			HealthCheckHandler,
-		},
-
-		Route{
-			"GET",
-			"/metrics/*url",
-			MetricsHandler,
-		},
-
-		Route{
-			"POST",
-			"/metrics/*url",
-			MetricsHandler,
-		},
-
-		Route{
-			"PUT",
-			"/metrics/*url",
-			MetricsHandler,
-		},
-
-		Route{
-			"PATCH",
-			"/metrics/*url",
-			MetricsHandler,
-		},
-
-		Route{
-			"DELETE",
-			"/metrics/*url",
-			MetricsHandler,
 		},
 	}
 
@@ -128,10 +100,10 @@ func logStackOnRecover(ctx *fasthttp.RequestCtx, r interface{}) {
 	return
 }
 
-func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handle {
-	return fasthttprouter.Handle(func(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+func globalMiddleware(h fasthttp.RequestHandler, timeout int) fasthttp.RequestHandler {
+	return func(c *fasthttp.RequestCtx) {
 		var v []byte
-		var ctx droictx.Context
+		ctx := &droictx.DoneContext{}
 		for headerKey, fieldkey := range ur.KeyMap {
 			v = c.Request.Header.Peek(headerKey)
 			if len(v) > 0 {
@@ -141,19 +113,24 @@ func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handl
 		c.SetUserValue(DROI_CTX_KEY, ctx)
 		HTTPAccessLog(ctx, string(c.Method()), string(c.Path()), c.RemoteAddr().String(), c.Request.Header.ContentLength())
 
+		// Add trace
+		sp := trace.CreateSpanFromReqF(droictx.ComponentGoBuster, &c.Request, ctx)
+		defer sp.Finish()
+		ctx.Set(droitrace.ParentSpan, sp)
+
 		doneCh := make(chan struct{})
 		go func() {
 
 			defer close(doneCh)
 			defer recv(c)
 
-			h(c, ps)
+			h(c)
 		}()
 
 		select {
 		case <-doneCh:
 
-			debugf("Forward query success, request: %+v, with response: %+v", &c.Request, &c.Response)
+			debugf("Request detail: request: %+v, with response: %+v", &c.Request, &c.Response)
 
 		case <-time.After(time.Duration(timeout) * time.Second):
 
@@ -162,7 +139,7 @@ func globalMiddleware(h fasthttprouter.Handle, timeout int) fasthttprouter.Handl
 		}
 
 		return
-	})
+	}
 }
 
 func ApiRegist(timeout int) *fasthttprouter.Router {

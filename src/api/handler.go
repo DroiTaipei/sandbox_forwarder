@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 )
 
@@ -11,23 +10,15 @@ const (
 	MAX_TTL          = 86400
 )
 
-func HealthCheckHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+func HealthCheckHandler(c *fasthttp.RequestCtx) {
 
 	resp := NewResponse()
 	resp.Write(c)
 }
 
-func MetricsHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
+func RequestHandler(c *fasthttp.RequestCtx) {
 
-	outputMetrics(c)
-
-	resp := NewResponse()
-	resp.Write(c)
-}
-
-func RequestHandler(c *fasthttp.RequestCtx, ps fasthttprouter.Params) {
-
-	url := ps.ByName("url")
+	url := string(c.URI().Path())
 
 	requestToGobuster(c, url)
 }

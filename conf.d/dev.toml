@@ -1,12 +1,12 @@
 [api]
   api_port = 8099
   forwarder_port = 8091
-  timeout = 190
+  timeout = 45
 
 [log]
   # Discard means not write log to local file
   file_name = "debug.log"
-  level = "debug"
+  level = "warn"
   standard_log_version = "1"
   access_log_version = "1"
   formatter = "json"
@@ -29,6 +29,14 @@
   queue_length = 1024
   # Unit is Millisecond
   enqueue_timeout = 1000
+  MetadataBackoff = 10
+
+[jaeger]
+  host = "10.128.112.10"
+  port = 32103
+  sample_rate = 1
+  queue_size = 128
+  flush_interval = "60s"
 
 [database]
 [database.mgo.default]
@@ -36,7 +44,6 @@
   user = "geoman"
   password = "wM7DJRQN81WxX4zD"
   authdatabase = "admin"
-  database = "zone"
   max_conn = 10
   max_idle = 15
   host_num = 2
