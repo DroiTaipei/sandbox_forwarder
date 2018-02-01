@@ -69,6 +69,7 @@ func requestToGobuster(c *fasthttp.RequestCtx, redirectURL string) {
 
 	req.SetRequestURI(getFullURI(redirectURL, c.URI().QueryString()))
 	sp := trace.CreateChildSpanByContextF(droictx.ComponentForwarder, ctx, req)
+	defer sp.Finish()
 	trace.InjectSpanF(sp, req)
 
 	if err := proxyClient.Do(req, resp); err != nil {
