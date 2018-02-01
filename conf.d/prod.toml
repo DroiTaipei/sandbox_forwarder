@@ -33,7 +33,7 @@
 [jaeger]
   host = "tpe-jaeger-agent.tyd.svc.cluster.local"
   port = 6831
-  sample_rate = 0.05
+  sample_rate = 0.1
   queue_size = 128
   flush_interval = "60s"
 
